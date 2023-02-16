@@ -15,14 +15,15 @@
     # any module necessary for this one to work correctly
     'depends': [
         'sale',
-        # 'sale_crm',
         'mail',
+        'mh_marketplace_account'
         ],
 
     # always loaded
     'data': [
         'data/config.xml',
         'views/views.xml',
+        'views/marketplace_account_view.xml',
         'security/ir.model.access.csv',
     ],
     'qweb': [

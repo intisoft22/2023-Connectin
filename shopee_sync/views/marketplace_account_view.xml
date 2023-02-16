@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <record id="marketplace_account_form_view" model="ir.ui.view">
+            <field name="name">marketplace.account.form.inherit</field>
+            <field name="model">marketplace.account</field>
+            <field name="inherit_id" ref="mh_marketplace_account.marketplace_account_form_view"/>
+            <field name="arch" type="xml">
+                <button name="get_product" position="after">
+                    <button string="Upload Image" type="object" name="post_upload_image" states='new'
+                                class="oe_highlight"/>
+                    <button string="Get Category" type="object" name="get_category" states='new'
+                                class="oe_highlight"/>
+                    <button string="Get Order" type="object" name="get_order" states='new'
+                                class="oe_highlight"/>
+                </button>
+            </field>
+        </record>
+
+        <!--<menuitem name="Marketplace" id="marketplace_menu" groups="base.group_no_one"/>-->
+        <!--<menuitem name="Marketplace Account" id="marketplace_account_menu" parent="mh_marketplace_account.marketplace_menu" action="marketplace_account_act_window"/>-->
+
+    </data>
+</odoo>
