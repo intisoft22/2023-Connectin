@@ -84,6 +84,8 @@
 
         <menuitem name="Marketplace" id="marketplace_menu" groups="base.group_no_one"/>
         <menuitem name="Marketplace Account" id="marketplace_account_menu" parent="mh_marketplace_account.marketplace_menu" action="marketplace_account_act_window"/>
+   <menuitem id="menu_marketplace_config" name="Configuration" parent="marketplace_menu" sequence="100"/>
+
 
     </data>
 </odoo>

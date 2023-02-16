@@ -1,0 +1,7 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_shopee_product_category_user,shopee.product.category.user,model_shopee_product_category,base.group_user,1,0,0,0
+access_shopee_product_category_manager,shopee.product.category.manager,model_shopee_product_category,base.group_system,1,1,1,1
+access_shopee_brand_user,shopee.brand.user,model_shopee_brand,base.group_user,1,0,0,0
+access_shopee_brand_manager,shopee.brand.manager,model_shopee_brand,base.group_system,1,1,1,1
+access_shopee_logistic_user,shopee.logistic.user,model_shopee_logistic,base.group_user,1,0,0,0
+access_shopee_logistic_manager,shopee.logistic.manager,model_shopee_logistic,base.group_system,1,1,1,1

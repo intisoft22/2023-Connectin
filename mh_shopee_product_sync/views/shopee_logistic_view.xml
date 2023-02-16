@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <record id="shopee_logistic_search_view" model="ir.ui.view">
+            <field name="name">shopee.logistic.search</field>
+            <field name="model">shopee.logistic</field>
+            <field name="arch" type="xml">
+                <search string="Shopee logistics">
+                    <field name="name" string="Shopee logistics"/>
+                    <field name="desc"/>
+                    <field name="active"/>
+                </search>
+            </field>
+        </record>
+        <record id="shopee_logistic_form_view" model="ir.ui.view">
+            <field name="name">shopee.logistic.form</field>
+            <field name="model">shopee.logistic</field>
+            <field name="arch" type="xml">
+                <form class="oe_form_configuration">
+                    <sheet>
+                        <div class="oe_title">
+                            <label for="name" string="name" class="oe_edit_only"/>
+                            <h1><field name="name" placeholder="e.g. Lamps"/></h1>
+                        </div>
+                        <group name="first" col="2">
+                            <field name="active" />
+                            <field name="desc" class="oe_inline"/>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+        <record id="shopee_logistic_list_view" model="ir.ui.view">
+            <field name="name">shopee.logistic.list</field>
+            <field name="model">shopee.logistic</field>
+            <field name="priority">1</field>
+            <field name="arch" type="xml">
+                <tree string="Shopee logistics">
+                    <field name="name" string="Name"/>
+                </tree>
+            </field>
+        </record>
+        <record id="shopee_logistic_action_form" model="ir.actions.act_window">
+            <field name="name">Shopee logistics</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">shopee.logistic</field>
+            <field name="search_view_id" ref="shopee_logistic_search_view"/>
+            <field name="view_id" ref="shopee_logistic_list_view"/>
+        </record>
+
+    <menuitem
+        action="shopee_logistic_action_form" id="menu_shopee_logistic_config_stock"
+        parent="menu_shopee_config" sequence="2"/>
+    </data>
+</odoo>

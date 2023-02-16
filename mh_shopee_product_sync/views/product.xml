@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+
+        <record id="product_template_only_form_view_forca" model="ir.ui.view">
+            <field name="name">shopee.template.product.form</field>
+            <field name="model">product.template</field>
+            <field name="inherit_id" ref="product.product_template_form_view"/>
+            <field name="arch" type="xml">
+                <xpath expr="//page[@name='inventory']" position="after">
+                    <page name='shopee_tab' string="Shopee">
+
+                        <group>
+                            <field name="shopee_product_id"/>
+                            <field name="shopee_name"/>
+                            <field name="shopee_category_id"/>
+                            <field name="shopee_desc"/>
+                        </group>
+                        <separator string="Spesification"/>
+                        <group>
+                            <field name="shopee_brand_id"/>
+                        </group>
+                        <separator string="Sales Information"/>
+                        <group>
+                            <field name="shopee_price"/>
+                        </group>
+                        <separator string="Logistic Information"/>
+                        <group>
+                            <label for="shopee_weight"/>
+                            <div>
+
+                                <field name="shopee_weight" class="oe_inline" nolabel="1"/>
+                                gr
+                            </div>
+
+                            <label for="shopee_length" string="Size"/>
+                            <div>
+
+                                <field name="shopee_length" class="oe_inline" nolabel="1"/>
+                                cm X
+                                <field name="shopee_width" class="oe_inline" nolabel="1"/>
+                                cm X
+                                <field name="shopee_height" class="oe_inline" nolabel="1"/>
+                                cm
+                            </div>
+
+                        </group>
+                        <separator string="Other Information"/>
+                        <group>
+                            <field name="shopee_sku"/>
+                            <field name="shopee_condition"/>
+                        </group>
+
+
+                    </page>
+                </xpath>
+            </field>
+        </record>
+    </data>
+</odoo>

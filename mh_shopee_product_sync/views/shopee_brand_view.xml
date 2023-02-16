@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <record id="shopee_brand_search_view" model="ir.ui.view">
+            <field name="name">shopee.brand.search</field>
+            <field name="model">shopee.brand</field>
+            <field name="arch" type="xml">
+                <search string="Shopee Brands">
+                    <field name="name" string="Shopee Brands"/>
+                    <field name="categ_id"/>
+                </search>
+            </field>
+        </record>
+        <record id="shopee_brand_form_view" model="ir.ui.view">
+            <field name="name">shopee.brand.form</field>
+            <field name="model">shopee.brand</field>
+            <field name="arch" type="xml">
+                <form class="oe_form_configuration">
+                    <sheet>
+                        <div class="oe_title">
+                            <label for="name" string="Category name" class="oe_edit_only"/>
+                            <h1><field name="name" placeholder="e.g. Lamps"/></h1>
+                        </div>
+                        <group name="first" col="2">
+                            <field name="categ_id" class="oe_inline"/>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+        <record id="shopee_brand_list_view" model="ir.ui.view">
+            <field name="name">shopee.brand.list</field>
+            <field name="model">shopee.brand</field>
+            <field name="priority">1</field>
+            <field name="arch" type="xml">
+                <tree string="Shopee Brands">
+                    <field name="name" string="Brand"/>
+                </tree>
+            </field>
+        </record>
+        <record id="shopee_brand_action_form" model="ir.actions.act_window">
+            <field name="name">Shopee Brands</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">shopee.brand</field>
+            <field name="search_view_id" ref="shopee_brand_search_view"/>
+            <field name="view_id" ref="shopee_brand_list_view"/>
+        </record>
+
+    <menuitem
+        action="shopee_brand_action_form" id="menu_shopee_brand_config_stock"
+        parent="menu_shopee_config" sequence="2"/>
+    </data>
+</odoo>

@@ -16,7 +16,8 @@
     'depends': [
         'sale',
         'mail',
-        'mh_marketplace_account'
+        'mh_marketplace_account',
+        'mh_shopee_product_sync'
         ],
 
     # always loaded
