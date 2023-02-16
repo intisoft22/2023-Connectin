@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+
+    <template id="assets_backend" name="forca_notif_list_assets" inherit_id="web.assets_backend">
+        <xpath expr="." position="inside">
+            <script src="/forca_sync_masterdata/static/src/js/composer_suggested_recipient_inherit.js"></script>
+        </xpath>
+    </template>
+
+</odoo>

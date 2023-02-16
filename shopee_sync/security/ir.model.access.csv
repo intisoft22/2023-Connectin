@@ -1,0 +1,4 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_shopee_product_attribute,access.shopee_product_attribute,model_shopee_product_attribute,,1,1,1,1
+access_shopee_product_attribute_value,access.shopee_product_attribute_value,model_shopee_product_attribute_value,,1,1,1,1
+access_shopee_product_attribute_value_parent,access.shopee_product_attribute_value_parent,model_shopee_product_attribute_value_parent,,1,1,1,1

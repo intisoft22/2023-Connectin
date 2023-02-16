@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        
+       <record id="marketplace_account_form_view" model="ir.ui.view">
+            <field name="name">marketplace.account.form</field>
+            <field name="model">marketplace.account</field>
+            <field name="arch" type="xml">
+                <form string="Marketplace Account">
+                    <header>
+                         <button string="Authenticate" type="object" name="confirm_authenticated" states='new'
+                                class="oe_highlight"/>
+                        <button string="Get token" type="object" name="get_token" states='new'
+                                class="oe_highlight"/>
+                        <button string="Get Product" type="object" name="get_product" states='new'
+                                class="oe_highlight"/>
+                        <field name="state" widget="statusbar" statusbar_visible="draft,authenticated"/>
+                    </header>
+                <sheet>
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1>
+                            <field name="name" placeholder="Name"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="company_id" />
+                            <field name="active" />
+                            <field name="marketplace" />
+                            <field name="url_api" />
+                        </group>
+                        <group>
+                            <field name="partner_id_shopee"/>
+                            <field name="partner_key_shopee"/>
+                            <field name="url_auth"/>
+                            <field name="shop_id_shopee"/>
+                            <field name="code_shopee"/>
+                            <field name="access_token_shopee"/>
+                            <field name="refresh_access_token_shopee"/>
+                        </group>
+                    </group>
+                </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="marketplace_account_tree_view" model="ir.ui.view">
+            <field name="name">marketplace.account.tree</field>
+            <field name="model">marketplace.account</field>
+            <field name="arch" type="xml">
+                <tree string="Marketplace Account">
+                    <field name="name"/>
+                    <field name="marketplace"/>
+                    <field name="state"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="marketplace_account_search_view" model="ir.ui.view">
+            <field name="name">marketplace.account.search</field>
+            <field name="model">marketplace.account</field>
+            <field name="arch" type="xml">
+                <search string="Marketplace Account">
+
+                    <field name="name"/>
+                    <group expand="1" string="Group By">
+                        <filter string="Marketplace" name="marketplace" domain="[]" context="{'group_by':'marketplace'}"/>
+                    </group>
+               </search>
+            </field>
+        </record>
+        <record id="marketplace_account_act_window" model="ir.actions.act_window">
+            <field name="name">Marketplace Account</field>
+            <field name="res_model">marketplace.account</field>
+            <field name="view_mode">tree,form</field>
+            <field name="search_view_id" ref="mh_marketplace_account.marketplace_account_search_view"/>
+            <field name="help" type="html">
+                <p class="oe_view_nocontent_create">
+                    There is no examples click here to add new Marketplace Account.
+                </p>
+            </field>
+        </record>
+
+        <menuitem name="Marketplace" id="marketplace_menu" groups="base.group_no_one"/>
+        <menuitem name="Marketplace Account" id="marketplace_account_menu" parent="mh_marketplace_account.marketplace_menu" action="marketplace_account_act_window"/>
+
+    </data>
+</odoo>

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <record id="shopee_address" model="ir.config_parameter">
+        <field name="key">shopee.address</field>
+        <field name="value">https://partner.test-stable.shopeemobile.com/</field>
+        <!--<field name="value">https://partner.test-stable.shopeemobile.com/api/v2/product/get_category</field>-->
+    </record>
+    <record id="shopee_default_token" model="ir.config_parameter">
+        <field name="key">shopee.default.token</field>
+        <field name="value">ec953a02-4f1a-4ad9-b257-1b43a4629a2c</field>
+    </record>>
+</odoo>
