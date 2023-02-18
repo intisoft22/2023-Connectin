@@ -49,7 +49,8 @@ class ProductTemplate(models.Model):
     shopee_height = fields.Float("Shopee Height")
 
     shopee_sku = fields.Char('SKU')
-
+    shopee_logistic_ids = fields.One2many('shopee.logistic.product','product_tmpl_id','Logistic')
+    shopee_attributes_ids = fields.One2many('shopee.product.attribute.product','product_tmpl_id','Attribute')
 
 
     def getProduct(self):

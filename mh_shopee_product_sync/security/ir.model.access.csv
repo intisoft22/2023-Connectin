@@ -5,3 +5,10 @@ access_shopee_brand_user,shopee.brand.user,model_shopee_brand,base.group_user,1,
 access_shopee_brand_manager,shopee.brand.manager,model_shopee_brand,base.group_system,1,1,1,1
 access_shopee_logistic_user,shopee.logistic.user,model_shopee_logistic,base.group_user,1,0,0,0
 access_shopee_logistic_manager,shopee.logistic.manager,model_shopee_logistic,base.group_system,1,1,1,1
+access_shopee_logistic_product_user,shopee.logistic.product.user,model_shopee_logistic_product,base.group_user,1,0,0,0
+access_shopee_logistic_product_manager,shopee.logistic.product.manager,model_shopee_logistic_product,base.group_system,1,1,1,1
+access_shopee_product_attribute,access.shopee_product_attribute,model_shopee_product_attribute,,1,1,1,1
+access_shopee_product_attribute_value,access.shopee_product_attribute_value,model_shopee_product_attribute_value,,1,1,1,1
+access_shopee_product_attribute_value_parent,access.shopee_product_attribute_value_parent,model_shopee_product_attribute_value_parent,,1,1,1,1
+access_shopee_product_attribute_product_user,shopee.product.attribute.product.manager,model_shopee_product_attribute_product,base.group_user,1,0,0,0
+access_shopee_product_attribute_product_manager,shopee.product.attribute.product.manager,model_shopee_product_attribute_product,base.group_system,1,1,1,1

@@ -154,7 +154,7 @@ class MarketplaceAccount(models.Model):
 
             # print(response.text)
             json_loads = json.loads(response.text)
-
+            print(json_loads)
             # rec.access_token_shopee = json_loads['access_token']
             return2 = []
             datas = self.env['product.template']
@@ -163,7 +163,7 @@ class MarketplaceAccount(models.Model):
                     return2.append(str(json_loads['msg']))
                 else:
                     for jload in json_loads['response']['item_list']:
-                        # print(jload)
+
                         data_ready = datas.search([('shopee_product_id', '=', jload['item_id'])])
                         category_id = False
                         if 'category_id' in jload:

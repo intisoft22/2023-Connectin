@@ -20,6 +20,25 @@
                         <separator string="Spesification"/>
                         <group>
                             <field name="shopee_brand_id"/>
+                            <field name="shopee_attributes_ids">
+                                <tree>
+                                    <field name="attribute_id"/>
+                                    <field name="is_mandatory"/>
+                                    <field name="attribute_value_display"/>
+                                </tree>
+                                <form>
+                                    <sheet>
+                                        <group>
+                                            <field name="attribute_id"/>
+                                            <field name="is_mandatory"/>
+                                            <field name="input_type"/>
+                                            <field name="attribute_value_id"/>
+                                            <field name="attribute_value_ids"/>
+                                            <field name="attribute_value_str"/>
+                                        </group>
+                                    </sheet>
+                                </form>
+                            </field>
                         </group>
                         <separator string="Sales Information"/>
                         <group>
@@ -44,7 +63,14 @@
                                 <field name="shopee_height" class="oe_inline" nolabel="1"/>
                                 cm
                             </div>
-
+                            <field name="shopee_logistic_ids">
+                                <tree>
+                                    <field name="logistic_id"/>
+                                    <field name="enable"/>
+                                    <field name="free"/>
+                                    <field name="est_fee"/>
+                                </tree>
+                            </field>
                         </group>
                         <separator string="Other Information"/>
                         <group>

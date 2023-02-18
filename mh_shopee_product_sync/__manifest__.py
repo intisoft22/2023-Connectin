@@ -17,6 +17,7 @@
         'views/shopee_product_category_view.xml',
         'views/shopee_brand_view.xml',
         'views/shopee_logistic_view.xml',
+        'views/shopee_attribute_view.xml',
         'security/ir.model.access.csv',
     ],
     'installable': True,
