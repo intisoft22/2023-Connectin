@@ -19,7 +19,8 @@
                         </group>
                         <separator string="Spesification"/>
                         <group>
-                            <field name="shopee_brand_id"/>
+                            <field name="shopee_brand_id" domain="shopee_brand_id_domain"/>
+                            <field name="shopee_brand_id_domain" invisible="1"/>
                             <field name="shopee_attributes_ids">
                                 <tree>
                                     <field name="attribute_id"/>

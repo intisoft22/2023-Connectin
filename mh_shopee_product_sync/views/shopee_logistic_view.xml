@@ -9,7 +9,7 @@
                 <search string="Shopee logistics">
                     <field name="name" string="Shopee logistics"/>
                     <field name="desc"/>
-                    <field name="active"/>
+                    <field name="enable"/>
                 </search>
             </field>
         </record>
@@ -24,7 +24,7 @@
                             <h1><field name="name" placeholder="e.g. Lamps"/></h1>
                         </div>
                         <group name="first" col="2">
-                            <field name="active" />
+                            <field name="enable" />
                             <field name="desc" class="oe_inline"/>
                         </group>
                     </sheet>
@@ -38,6 +38,8 @@
             <field name="arch" type="xml">
                 <tree string="Shopee logistics">
                     <field name="name" string="Name"/>
+                    <field name="desc"/>
+                    <field name="enable"/>
                 </tree>
             </field>
         </record>

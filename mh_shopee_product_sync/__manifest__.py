@@ -9,7 +9,7 @@
     'website': 'rexmey.com',
 
     'depends': [
-        'product',
+        'product','web_domain_field'
         ],
 
     'data': [

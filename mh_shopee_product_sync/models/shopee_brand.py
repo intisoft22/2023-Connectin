@@ -19,7 +19,9 @@ class ShopeeBrand(models.Model):
 
     name = fields.Char('Name', index=True, required=True)
 
-    shopee_brand_id = fields.Integer('Shopee Category ID')
+    shopee_brand_id = fields.Integer('Shopee Brand ID')
 
-    categ_id = fields.Many2one('product.category', 'Parent Category', index=True, ondelete='cascade')
+    categ_id = fields.Many2one('shopee.product.category', 'Parent Category', index=True, ondelete='cascade')
+    shopee_category_id = fields.Char('Shopee Category ID')
+    display_brand_name = fields.Char('Shopee Display Brand Name')
 

@@ -8,6 +8,8 @@
             <field name="inherit_id" ref="mh_marketplace_account.marketplace_account_form_view"/>
             <field name="arch" type="xml">
                 <button name="get_product" position="after">
+                    <button string="Get Dependencies" type="object" name="get_dependencies" states='new'
+                                class="oe_highlight"/>
                     <button string="Upload Image" type="object" name="post_upload_image" states='new'
                                 class="oe_highlight"/>
                     <button string="Get Category" type="object" name="get_category" states='new'

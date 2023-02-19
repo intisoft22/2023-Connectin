@@ -24,6 +24,9 @@
                         </div>
                         <group name="first" col="2">
                             <field name="categ_id" class="oe_inline"/>
+                            <field name="shopee_brand_id" class="oe_inline"/>
+                            <field name="shopee_category_id" class="oe_inline"/>
+                            <field name="display_brand_name" class="oe_inline"/>
                         </group>
                     </sheet>
                 </form>

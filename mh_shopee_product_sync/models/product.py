@@ -37,9 +37,14 @@ class ProductTemplate(models.Model):
     shopee_name = fields.Char('Shopee Name')
     shopee_desc = fields.Char('Shopee Description')
     shopee_product_id = fields.Integer('Shopee Product ID')
-    shopee_category_id = fields.Many2one('shopee.product.category','Shopee Category')
+    shopee_category_id = fields.Many2one('shopee.product.category','Shopee Category',domain="[('has_children','=',False)]")
     shopee_brand_id = fields.Many2one('shopee.brand','Shopee Brand')
 
+    shopee_brand_id_domain = fields.Char(
+        compute="_compute_shopee_brand_id_domain",
+        readonly=True,
+        store=False,
+    )
     shopee_price = fields.Float('Shopee Price',digits='Product Price')
     shopee_condition = fields.Selection([('NEW','NEW'),('SECOND','SECOND')], 'Condition')
 
@@ -52,6 +57,28 @@ class ProductTemplate(models.Model):
     shopee_logistic_ids = fields.One2many('shopee.logistic.product','product_tmpl_id','Logistic')
     shopee_attributes_ids = fields.One2many('shopee.product.attribute.product','product_tmpl_id','Attribute')
 
+    @api.depends('shopee_category_id')
+    def _compute_shopee_brand_id_domain(self):
+        for rec in self:
+            if rec.shopee_category_id:
+                brand_obj = self.env['shopee.brand']
+                brand_ids = brand_obj.search([('categ_id', '=', rec.shopee_category_id.id)])
+                # print(categ_products)
+                # print("===============================")
+                brand_array = []
+                for x in brand_ids:
+                    brand_array.append(x.id)
+
+                # return {'domain': {'product_id': [('id', 'in', product_array)]}}
+                # print(product_array)
+                rec.shopee_brand_id_domain = json.dumps(
+                    [('id', 'in', brand_array)]
+                )
+            else:
+                # return {'domain': {'product_id': [('id', '=', 0)]}}
+                rec.shopee_brand_id_domain = json.dumps(
+                    [('id', '=', 0)]
+                )
 
     def getProduct(self):
         conf_obj = self.env['ir.config_parameter']

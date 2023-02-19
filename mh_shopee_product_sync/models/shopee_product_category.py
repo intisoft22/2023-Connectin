@@ -29,12 +29,15 @@ class ShopeeProductCategory(models.Model):
     complete_name = fields.Char(
         'Complete Name', compute='_compute_complete_name',
         store=True)
-    parent_id = fields.Many2one('product.category', 'Parent Category', index=True, ondelete='cascade')
+
+    parent_category_id = fields.Char('Shopee Parent Category ID')
+    parent_id = fields.Many2one('shopee.product.category', 'Shopee Parent Category', index=True, ondelete='cascade')
     parent_path = fields.Char(index=True)
-    child_id = fields.One2many('product.category', 'parent_id', 'Child Categories')
+    child_id = fields.One2many('shopee.product.category', 'parent_id', 'Child Categories')
     product_count = fields.Integer(
         '# Products', compute='_compute_product_count',
         help="The number of products under this category (Does not consider the children categories)")
+    display_category_name = fields.Char('Shopee Display Category Name')
 
     @api.depends('name', 'parent_id.complete_name')
     def _compute_complete_name(self):
@@ -45,8 +48,8 @@ class ShopeeProductCategory(models.Model):
                 category.complete_name = category.name
 
     def _compute_product_count(self):
-        read_group_res = self.env['product.template'].read_group([('categ_id', 'child_of', self.ids)], ['categ_id'], ['categ_id'])
-        group_data = dict((data['categ_id'][0], data['categ_id_count']) for data in read_group_res)
+        read_group_res = self.env['product.template'].read_group([('shopee_category_id', 'child_of', self.ids)], ['shopee_category_id'], ['shopee_category_id'])
+        group_data = dict((data['shopee_category_id'][0], data['categ_id_count']) for data in read_group_res)
         for categ in self:
             product_count = 0
             for sub_categ_id in categ.search([('id', 'child_of', categ.ids)]).ids:
@@ -62,11 +65,4 @@ class ShopeeProductCategory(models.Model):
     @api.model
     def name_create(self, name):
         return self.create({'name': name}).name_get()[0]
-
-    def unlink(self):
-        main_category = self.env.ref('product.product_category_all')
-        if main_category in self:
-            raise UserError(_("You cannot delete this product category, it is the default generic category."))
-        return super().unlink()
-
 

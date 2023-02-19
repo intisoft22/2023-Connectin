@@ -19,10 +19,13 @@ class ShopeeLogistic(models.Model):
 
     name = fields.Char('Name', index=True, required=True)
     desc = fields.Text('Desc',  required=True)
-    active = fields.Boolean('Enable',  required=True)
+    enable = fields.Boolean('Enable',  required=True)
+    cod_enabled = fields.Boolean('COD Enable',  required=True)
 
     shopee_logistic_id = fields.Integer('Shopee Logistic ID')
 
+
+    fee_type = fields.Char('Fee Type', index=True, required=True)
 
 
 class ShopeeLogisticProduct(models.Model):
