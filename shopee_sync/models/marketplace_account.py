@@ -8,6 +8,7 @@ import hashlib
 import urllib.request
 from odoo import http
 import requests
+from odoo.exceptions import AccessError
 
 
 class MarketplaceAccount(models.Model):
@@ -409,19 +410,31 @@ class MarketplaceAccount(models.Model):
                             order_sn = jload['order_sn']
                         product_ready = False
                         data_ready = datas.search([('client_order_ref', '=', jload['category_id'])])
-                        costumer = self.env['res.partner'].search(
-                            [('name', '=', 'Shopee')], limit=1)
+                        costumer = self.env['res.partner'].search([('name', '=', 'Shopee')], limit=1)
+                        shipping_address = ''
+                        jload['recipient_address']
+                        item_list = []
                         for prod in jload['item_list']:
                             prod['item_id']
-                            product_ready = self.env['product.template'].search(
-                                [('shopee_product_id', '=', prod['item_id'])], limit=1)
-                        if product_ready and data_ready:
+                            product_ready = self.env['product.template'].search([('shopee_product_id', '=', prod['item_id'])], limit=1)
+                            if product_ready:
+                                vals_item = {
+                                    'product_id': product_ready.id,
+                                    'name': product_ready.name + ' (model: '+ str(jload['model_name']) + ')',
+                                    'product_uom_qty': jload['model_quantity_purchased'],
+                                    # 'product_qty': jload['model_quantity_purchased'],
+                                    'price_unit': jload['model_original_price']
+                                }
+                                item_list.append(vals_item)
+
+                        if customer and data_ready:
                             print(product_ready.name)
                             print(product_ready.id)
                             vals_order = {
-                                'partner_id': costumer,
+                                'partner_id': costumer.id,
                                 'client_order_ref': jload['order_sn'],
-                                'note': product_ready.name,
+                                'order_line': item_list,
+                                'note': jload['buyer_user_id'],
                             }
                         else:
                             vals_order = {
@@ -508,3 +521,170 @@ class MarketplaceAccount(models.Model):
                     'next': {'type': 'ir.actions.act_window_close'},
                 },
             }
+
+
+    def addProduct(self):
+        conf_obj = self.env['ir.config_parameter']
+        url_address = False
+        forca_address = conf_obj.search([('key', '=', 'shopee.address')])
+        for con1 in forca_address:
+            url_address = con1.value
+        forca_token = conf_obj.search([('key', '=', 'shopee.default.token')])
+        for rec in self:
+            timest = int(time.time())
+            host = rec.url_api
+            path = "/api/v2/product/add_item"
+            partner_id = rec.partner_id_shopee
+            shop_id = rec.shop_id_shopee
+            access_token = rec.access_token_shopee
+            tmp = rec.partner_key_shopee
+            partner_key = tmp.encode()
+            tmp_base_string = "%s%s%s%s%s" % (partner_id, path, timest, access_token, shop_id)
+            base_string = tmp_base_string.encode()
+            sign = hmac.new(partner_key, base_string, hashlib.sha256).hexdigest()
+            url = host + path + "?access_token=%s&partner_id=%s&shop_id=%s&timestamp=%s&sign=%s" % (
+                access_token, partner_id, shop_id, timest, sign)
+            print(url)
+            payload = {
+                "description":"Test add item ",
+                "item_name":"Hello Add item",
+                "category_id":14695,
+                "brand":{
+                    "brand_id":123,
+                    "original_brand_name":"nike"
+                },
+                "logistic_info":[
+                    {
+                        "sizeid":0,
+                        "shipping_fee":23.12,
+                        "enabled":'true',
+                        "is_free":'false',
+                        "logistic_id":80101
+                    },
+                    {
+                        "shipping_fee":20000,
+                        "enabled":'true',
+                        "is_free":'false',
+                        "logistic_id":80106
+                    },
+                    {
+                        "is_free":'false',
+                        "enabled":'false',
+                        "logistic_id":86668
+                    },
+                    {
+                        "enabled":'true',
+                        "price":12000,
+                        "is_free":'true',
+                        "logistic_id":88001
+                    },
+                    {
+                        "enabled":'false',
+                        "price":2,
+                        "is_free":'false',
+                        "logistic_id":88014
+                    }
+                ],
+                "weight":1.1,
+                "item_status":"UNLIST",
+                "image":{
+                    "image_id_list":[
+                        "a17bb867ecfe900e92e460c57b892590",
+                        "30aa47695d1afb99e296956699f67be6",
+                        "2ffd521a59da66f9489fa41b5824bb62"
+                    ]
+                },
+                "dimension":{
+                    "package_height":11,
+                    "package_length":11,
+                    "package_width":11
+                },
+                "attribute_list":[
+                    {
+                        "attribute_id":4811,
+                        "attribute_value_list":[
+                            {
+                                "value_id":0,
+                                "original_value_name":"",
+                                "value_unit":""
+                            }
+                        ]
+                    }
+                ],
+                "original_price":123.3,
+                "seller_stock": [
+                    {
+                        "stock": 0
+                    }
+                ],
+                "tax_info":{
+                    "ncm":"123",
+                    "same_state_cfop":"123",
+                    "diff_state_cfop":"123",
+                    "csosn":"123",
+                    "origin":"1",
+                    "cest":"12345",
+                    "measure_unit":"1"
+                },
+                "complaint_policy":{
+                    "warranty_time":"ONE_YEAR",
+                    "exclude_entrepreneur_warranty":"123",
+                    "diff_state_cfop":'true',
+                    "complaint_address_id":123456,
+                    "additional_information":""
+                },
+                "description_type":"extended",
+                "description_info":{
+                    "extended_description":{
+                        "field_list":[
+                            {
+                                "field_type":"text",
+                                "text":"text description 1"
+                            },
+                            {
+                                "field_type":"image",
+                                "image_info":{
+                                    "image_id":"1e076dff0699d8e778c06dd6c02df1fe"
+                                }
+                            },
+                            {
+                                "field_type":"image",
+                                "image_info":{
+                                    "image_id":"c07ac95ba7bb624d731e37fe2f0349de"
+                                }
+                            },
+                            {
+                                "field_type":"text",
+                                "text":"text description 1"
+                            }
+                        ]
+                    }
+                }
+            }
+
+            headers = {}
+            response = requests.request("GET", url, headers=headers, data=payload, allow_redirects=False)
+            print(response.text)
+            if '404' in str(response.text):
+                raise AccessError(_('404 api url not found'))
+            json_loads = json.loads(response.text)
+            return2 = []
+            datas = self.env['product.template']
+            if json_loads:
+                if json_loads['codestatus'] == 'E':
+                    return2.append(str(json_loads['message']))
+                else:
+                    for jloads in json_loads['response']:
+                            data_ready = datas.search([('shopee_product_id', '=', jload['item_id'])])
+                            category_id = False
+                            if jload['category_id']:
+                                category_id = self.env['product.category'].search([('shopee_category_id', '=', jload['category_id'])]).id
+                            vals_product = {
+                                'shopee_product_id': jload['item_id'],
+                                'category_id': category_id,
+                                'name': jload['item_name']
+                                }
+                            if data_ready:
+                                updated = datas.write(vals_product)
+                            else:
+                                created = datas.create(vals_product)
