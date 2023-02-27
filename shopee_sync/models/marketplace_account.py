@@ -374,6 +374,39 @@ class MarketplaceAccount(models.Model):
                         order_sn = jload['order_sn']
                         self.get_order_detail(order_sn)
 
+    def get_order_time(self, start_date, end_date):
+        for rec in self:
+            timest = int(time.time())
+            host = rec.url_api
+            path = "/api/v2/order/get_order_list"
+            partner_id = rec.partner_id_shopee
+            shop_id = rec.shop_id_shopee
+            access_token = rec.access_token_shopee
+            tmp = rec.partner_key_shopee
+            partner_key = tmp.encode()
+            tmp_base_string = "%s%s%s%s%s" % (partner_id, path, timest, access_token, shop_id)
+            base_string = tmp_base_string.encode()
+            sign = hmac.new(partner_key, base_string, hashlib.sha256).hexdigest()
+            time_from = start_date
+            time_to = end_date
+            url = host + path + "?access_token=%s&partner_id=%s&shop_id=%s&timestamp=%s&sign=%s&page_size=20&time_from=%s&time_range_field=create_time&time_to=%s" % (
+            access_token, partner_id, shop_id, timest, sign, time_from, time_to)
+            print(url)
+            payload = json.dumps({})
+            headers = {'Content-Type': 'application/json'}
+            response = requests.request("GET", url, headers=headers, data=payload, allow_redirects=False)
+            print(response.text)
+            json_loads = json.loads(response.text)
+            order_sn = 'kosong'
+            if json_loads:
+                if json_loads['error'] == 'error_param':
+                    return2.append(str(json_loads['message']))
+                else:
+                    for jload in json_loads['response']['order_list']:
+                        print(jload)
+                        order_sn = jload['order_sn']
+                        self.get_order_detail(order_sn)
+
     def get_order_detail(self, order_sn):
         for rec in self:
             timest = int(time.time())
@@ -399,24 +432,22 @@ class MarketplaceAccount(models.Model):
             json_loads = json.loads(response.text)
             return2 = []
             datas = self.env['sale.order']
-            order_sn = 'kosong'
             if json_loads:
                 if json_loads['error'] == 'error_param':
                     return2.append(str(json_loads['message']))
                 else:
+                    ada_data = False
                     for jload in json_loads['response']['order_list']:
                         print(jload)
-                        if order_sn == 'kosong':
-                            order_sn = jload['order_sn']
                         product_ready = False
-                        data_ready = datas.search([('client_order_ref', '=', jload['category_id'])])
-                        costumer = self.env['res.partner'].search([('name', '=', 'Shopee')], limit=1)
+                        data_ready = datas.search([('client_order_ref', '=', jload['order_sn'])])
+                        partner = self.env['res.partner'].search([('name', '=', 'Shopee')], limit=1)
                         shipping_address = ''
-                        jload['recipient_address']
+                        address = jload['recipient_address']
                         item_list = []
                         for prod in jload['item_list']:
                             prod['item_id']
-                            product_ready = self.env['product.template'].search([('shopee_product_id', '=', prod['item_id'])], limit=1)
+                            product_ready = self.env['product.product'].search([('shopee_product_id', '=', prod['item_id'])], limit=1)
                             if product_ready:
                                 vals_item = {
                                     'product_id': product_ready.id,
@@ -427,27 +458,128 @@ class MarketplaceAccount(models.Model):
                                 }
                                 item_list.append(vals_item)
 
-                        if customer and data_ready:
-                            print(product_ready.name)
-                            print(product_ready.id)
+                        if partner and data_ready:
                             vals_order = {
-                                'partner_id': costumer.id,
+                                'partner_id': partner.id,
                                 'client_order_ref': jload['order_sn'],
                                 'order_line': item_list,
                                 'note': jload['buyer_user_id'],
                             }
                         else:
                             vals_order = {
-                                'partner_id': costumer,
+                                'partner_id': partner,
                                 'client_order_ref': jload['order_sn'],
                                 'note': jload['total_amount'],
                             }
                         if data_ready:
-                            print('update')
-                            print(vals_order)
-                            updated = datas.write(vals_order)
+                            updated = data_ready.write(vals_order)
+                            ada_data = True
+                            for prod in jload['item_list']:
+                                product_ready = self.env['product.product'].search([('shopee_product_id', '=', prod['item_id'])], limit=1)
+                                if product_ready:
+                                    vals_item = {
+                                        'product_id': product_ready.id,
+                                        'name': product_ready.name + ' (model: '+ str(jload['model_name']) + ')',
+                                        'product_uom_qty': jload['model_quantity_purchased'],
+                                        'price_unit': jload['model_original_price'],
+                                        'order_id': data_ready.id
+                                    }
+                                    for line in data_ready.order_line:
+                                        if line.product_id.shopee_product_id == int(prod['item_id']):
+                                            wr = line.write(vals_item)
+
                         else:
                             created = datas.create(vals_order)
+                            ada_data = True
+                            for prod in jload['item_list']:
+                                product_ready = self.env['product.product'].search([('shopee_product_id', '=', prod['item_id'])], limit=1)
+                                if product_ready:
+                                    vals_item = {
+                                        'product_id': product_ready.id,
+                                        'name': product_ready.name + ' (model: '+ str(jload['model_name']) + ')',
+                                        'product_uom_qty': jload['model_quantity_purchased'],
+                                        'price_unit': jload['model_original_price'],
+                                        'order_id': created.id
+                                    }
+                                    for line in data_ready.order_line:
+                                        if line.product_id.shopee_product_id == int(prod['item_id']):
+                                            wr = line.write(vals_item)
+                                else:
+                                    updated = created.write({'note': 'produk belum tersikronisasi'})
+
+
+                    if not ada_data:
+                        print('jload kosong')
+                        conf_obj = self.env['ir.config_parameter']
+                        url_address = False
+                        forca_address = conf_obj.search([('key', '=', 'shopee.product.id.tes')])
+                        for con1 in forca_address:
+                            shopee_item_id = con1.value
+                        product_ready = False
+                        data_ready = datas.search([('client_order_ref', '=', order_sn)])
+                        print(order_sn)
+                        print(data_ready)
+                        partner = self.env['res.partner'].search([('name', '=', 'Shopee')], limit=1)
+                        shipping_address = ''
+                        item_list = []
+                        vals_item = False
+                        product_ready = self.env['product.product'].search([('shopee_product_id', '=', shopee_item_id)], limit=1)
+                        if product_ready:
+                            vals_item = {
+                                'product_id': product_ready.id,
+                                'name': product_ready.name ,
+                                'product_uom_qty': 10,
+                                # 'product_qty': jload['model_quantity_purchased'],
+                                'price_unit': 12000
+                            }
+                            item_list.append(vals_item)
+
+                        if partner:
+                            vals_order = {
+                                'partner_id': partner.id,
+                                'client_order_ref': order_sn,
+                                'note': 'tessss',
+                            }
+                        if data_ready:
+                            vals_order = {
+                                'partner_id': partner.id,
+                                'client_order_ref': order_sn,
+                                'note': 'updateeeee',
+                            }
+                            print('update')
+                            print(vals_order)
+                            updated = data_ready.write(vals_order)
+                            for line in data_ready.order_line:
+                                ada_line = False
+                                product_ready = self.env['product.product'].search([('shopee_product_id', '=', shopee_item_id)], limit=1)
+                                vals_item = {
+                                    'product_id': product_ready.id,
+                                    'name': product_ready.name,
+                                    'product_uom_qty': 10,
+                                    # 'product_qty': jload['model_quantity_purchased'],
+                                    'price_unit': 10000,
+                                    'order_id': data_ready.id
+                                }
+                                if line.product_id.shopee_product_id == int(shopee_item_id):
+                                    wr = line.write(vals_item)
+                                    ada_line = True
+
+                        else:
+                            print('create')
+                            print(vals_order)
+                            created = datas.create(vals_order)
+                            product_ready = self.env['product.product'].search([('shopee_product_id', '=', shopee_item_id)],limit=1)
+                            if product_ready:
+                                vals_item = {
+                                    'product_id': product_ready.id,
+                                    'name': product_ready.name,
+                                    'product_uom_qty': 10,
+                                    # 'product_qty': jload['model_quantity_purchased'],
+                                    'price_unit': 12000,
+                                    'order_id': created.id
+                                }
+                                create_line = self.env['sale.order.line'].create(vals_item)
+
 
     def get_logistic(self):
         for rec in self:

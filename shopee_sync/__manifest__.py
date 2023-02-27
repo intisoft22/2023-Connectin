@@ -25,6 +25,7 @@
         'data/config.xml',
         'views/views.xml',
         'views/marketplace_account_view.xml',
+        'views/order_sync.xml',
         'security/ir.model.access.csv',
     ],
     'qweb': [
