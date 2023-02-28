@@ -9,4 +9,8 @@
         <field name="key">shopee.default.token</field>
         <field name="value">ec953a02-4f1a-4ad9-b257-1b43a4629a2c</field>
     </record>>
+    <record id="shopee_product_id_tes" model="ir.config_parameter">
+        <field name="key">shopee.product.id.tes</field>
+        <field name="value">1782718</field>
+    </record>>
 </odoo>
