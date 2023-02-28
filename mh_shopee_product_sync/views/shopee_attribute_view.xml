@@ -48,13 +48,17 @@
                                 </group>
                                 <field name="parent_attribute_list">
                                     <tree>
+                                        <field name="shopee_parent_attribute_id"/>
+                                        <field name="shopee_parent_value_id"/>
+                                        <field name="parent_attribute_value_id"/>
                                         <field name="parent_attribute_id"/>
-                                        <field name="parent_value_id"/>
                                     </tree>
                                     <form>
                                         <group>
+                                            <field name="shopee_parent_attribute_id"/>
+                                            <field name="shopee_parent_value_id"/>
+                                            <field name="parent_attribute_value_id" />
                                             <field name="parent_attribute_id"/>
-                                            <field name="parent_value_id"/>
                                         </group>
                                     </form>
                                 </field>
@@ -70,10 +74,10 @@
             <field name="view_mode">tree,form</field>
         </record>
         <menuitem
-            action="shopee_product_attribute_action_window"
-            id="shopee_product_attribute_menu"
-            name="Shopee Product Attribute"
-            sequence="102"
-            parent="menu_shopee_config"/>
+                action="shopee_product_attribute_action_window"
+                id="shopee_product_attribute_menu"
+                name="Shopee Product Attribute"
+                sequence="102"
+                parent="menu_shopee_config"/>
     </data>
 </odoo>

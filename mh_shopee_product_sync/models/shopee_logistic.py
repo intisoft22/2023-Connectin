@@ -32,11 +32,11 @@ class ShopeeLogisticProduct(models.Model):
     _name = "shopee.logistic.product"
     _description = "Shopee Logistic in Product"
 
-    product_tmpl_id = fields.Many2one('product.template', index=True, required=True)
-    product_id = fields.Many2one('product.product', index=True, required=True)
+    product_tmpl_id = fields.Many2one('product.template', index=True)
+    product_id = fields.Many2one('product.product', index=True)
     logistic_id = fields.Many2one('shopee.logistic', index=True, required=True)
     enable = fields.Boolean('Enable',  required=True)
     free = fields.Boolean('Free',  required=True)
 
-    fee = fields.Float('Shipping Fee', index=True, required=True)
-    est_fee = fields.Float('Shipping Fee', index=True, required=True)
+    fee = fields.Float('Shipping Fee', index=True,)
+    est_fee = fields.Float('Shipping Fee', index=True)

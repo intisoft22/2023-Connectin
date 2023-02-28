@@ -11,9 +11,11 @@ from datetime import date, datetime, timedelta
 class ProductAttributeValueParent(models.Model):
     _name = 'shopee.product.attribute.value.parent'
 
-    parent_attribute_id = fields.Integer('Parent Attribute Id')
-    parent_value_id = fields.Integer('Parent Value Id')
+    shopee_parent_attribute_id = fields.Integer('Shopee Parent Attribute Id')
+    shopee_parent_value_id = fields.Integer('Shopee Parent Value Id')
     attribute_value_id = fields.Many2one('shopee.product.attribute.value', string='Value Id')
+    parent_attribute_value_id = fields.Many2one('shopee.product.attribute.value', string='Value Id')
+    parent_attribute_id = fields.Many2one('shopee.product.attribute', string='Value Id')
 
 class ProductAttributeValue(models.Model):
     _name = 'shopee.product.attribute.value'
@@ -122,11 +124,11 @@ class ShopeeProductAttributeProduct(models.Model):
     _description = "Shopee Product Attribute in Product"
 
     product_tmpl_id = fields.Many2one('product.template', index=True, required=True)
-    product_id = fields.Many2one('product.product', index=True, required=True)
+    product_id = fields.Many2one('product.product', index=True)
     attribute_id = fields.Many2one('shopee.product.attribute', index=True, required=True)
     is_mandatory = fields.Boolean('Mandatory')
     input_type = fields.Char('Input Type')
-    attribute_value_id = fields.Many2one('shopee.product.attribute.value','Value', index=True, required=True,)
-    attribute_value_ids = fields.Many2many('shopee.product.attribute.value','attribute_product_id','value_id','Value', index=True, required=True)
+    attribute_value_id = fields.Many2one('shopee.product.attribute.value','Value', index=True, )
+    attribute_value_ids = fields.Many2many('shopee.product.attribute.value','attribute_value_product_rel','attribute_product_id','value_id',string='Value', index=True, )
     attribute_value_str = fields.Char('Value')
     attribute_value_display = fields.Char('Value')
