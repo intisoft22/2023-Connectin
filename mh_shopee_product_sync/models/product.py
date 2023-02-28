@@ -73,11 +73,11 @@ class ProductProduct(models.Model):
 
             # print(params_file)
             # print(url)
-            files = [
-                ('image',
-                 ('image', open("/home/meyrina/Pictures/tesshopee.png", "rb"), "application/octet-stream"))
-                # Replace with actual file path
-            ]
+            # files = [
+            #     ('image',
+            #      ('image', open("/home/meyrina/Pictures/tesshopee.png", "rb"), "application/octet-stream"))
+            #     # Replace with actual file path
+            # ]
 
             payload = {}
 
@@ -137,8 +137,6 @@ class ProductProduct(models.Model):
             # gambar.append('sg-11134201-23020-9muyf8m5h1nve2')
             for logti in rec.shopee_logistic_ids:
                 valslog = {
-                    "size_id": 0,
-                    "shipping_fee": 0,
                     "enabled": logti.enable,
                     "is_free": logti.free,
                     "logistic_id": logti.logistic_id.shopee_logistic_id
@@ -177,6 +175,9 @@ class ProductProduct(models.Model):
                                 })
                             attrib['attribute_value_list'] = value_ids
                         attribute.append(attrib)
+            shopee_weight=0.0
+            if rec.shopee_weight>0:
+                shopee_weight=rec.shopee_weight/1000
             payload = json.dumps(
                 {
                     "description": rec.shopee_desc,
@@ -186,16 +187,16 @@ class ProductProduct(models.Model):
                         "brand_id": 0,
                         "original_brand_name": "NoBrand"
                     },
+                    "dimension": {
+                        "package_height": int(rec.shopee_height),
+                        "package_length": int(rec.shopee_length),
+                        "package_width": int(rec.shopee_width)
+                    },
+                    "weight": shopee_weight,
                     "logistic_info": logistik,
-                    "weight": rec.shopee_weight,
                     "item_status": rec.shopee_item_status,
                     "image": {
                         "image_id_list": gambar
-                    },
-                    "dimension": {
-                        "package_height": rec.shopee_height,
-                        "package_length": rec.shopee_length,
-                        "package_width": rec.shopee_width
                     },
                     "attribute_list": attribute,
                     "original_price": rec.shopee_price,

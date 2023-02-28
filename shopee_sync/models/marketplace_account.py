@@ -71,8 +71,8 @@ class MarketplaceAccount(models.Model):
                             categ_id=data_ready
                         else:
                             categ_id = datas.create(vals_product_category)
-                        if not jload['has_children']:
-                            self.get_brand(categ_id.id, jload['category_id'], 0)
+                        # if not jload['has_children']:
+                        #     self.get_brand(categ_id.id, jload['category_id'], 0)
             return {
                 'type': 'ir.actions.client',
                 'tag': 'display_notification',
