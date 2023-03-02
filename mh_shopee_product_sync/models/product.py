@@ -275,7 +275,7 @@ class ProductTemplate(models.Model):
     is_shopee = fields.Boolean('Shopee')
     shopee_name = fields.Char('Shopee Name')
     shopee_desc = fields.Char('Shopee Description')
-    shopee_product_id = fields.Integer('Shopee Product ID')
+    shopee_product_id = fields.Char('Shopee Product ID')
     shopee_category_id = fields.Many2one('shopee.product.category', 'Shopee Category',
                                          domain="[('has_children','=',False)]")
     shopee_brand_id = fields.Many2one('shopee.brand', 'Shopee Brand')
