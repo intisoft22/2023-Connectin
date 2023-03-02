@@ -94,7 +94,8 @@ class ProductCategory(models.Model):
 class ProductTemplate(models.Model):
     _inherit = 'product.template'
 
-    shopee_product_id = fields.Integer('Shopee Product ID')
+    shopee_product_id = fields.Char('Shopee Product ID')
+    shopee_product_status = fields.Char('Shopee Product Status')
 
     def getProduct(self):
         conf_obj = self.env['ir.config_parameter']

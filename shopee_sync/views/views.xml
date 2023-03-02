@@ -13,6 +13,27 @@
                 </xpath>
             </field>
         </record>
+
+        <record id="shopee_view_order_form" model="ir.ui.view">
+            <field name="name">shopee.sale.order.form</field>
+            <field name="model">sale.order</field>
+            <field name="inherit_id" ref="sale.view_order_form"/>
+            <field name="arch" type="xml">
+                <page name="order_lines" position="after">
+                    <page string="Shopee Data" name="shopee_data">
+                        <group>
+                            <field name="shopee_buyer_username" />
+                            <field name="shopee_buyer_id" />
+                            <field name="shopee_recipient_address" />
+                            <field name="shopee_message_to_seller" />
+                            <field name="shopee_order_status" />
+                            <field name="shopee_payment_method" />
+                            <field name="shopee_shipping_carrier" />
+                        </group>
+                    </page>
+                </page>
+            </field>
+        </record>
         <menuitem
             action="product.product_category_action_form"
             id="forca_product_category_menu"
