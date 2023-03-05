@@ -1,2 +1,4 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_shopee_get_order_user,shopee_get_order user,model_shopee_get_order,,1,1,1,1
+access_shopee_packege_list_user,shopee_packege_list user,model_shopee_packege_list,,1,1,1,1
+access_shopee_packege_list_detail_user,shopee_packege_list_detail user,model_shopee_packege_list_detail,,1,1,1,1

@@ -15,15 +15,17 @@ class ShopeePackageListDetail(models.Model):
     product_id = fields.Many2one('product.product', string='Product')
     model_id = fields.Char('Model ID')
     quantity = fields.Char('Quantity')
+    pack_id = fields.Many2one('shopee.packege.list.detail', string='Package')
+
 
 class ShopeePackageList(models.Model):
     _name = 'shopee.packege.list'
 
-    package_number = fields.Char('package_number')
-    logistics_status = fields.Char('logistics_status')
-    shipping_carrier = fields.Char('shipping_carrier')
-    item_list = fields.Many2one('shopee.packege.list.detail', string='Item List')
+    package_number = fields.Char('Package Number')
+    logistics_status = fields.Char('Logistics Status')
+    shipping_carrier = fields.Char('Shipping Carrier')
     order_id = fields.Many2one('sale.order', string='Sale Order')
+    item_list = fields.One2many('shopee.packege.list.detail', 'pack_id', 'Package List')
 
 
 class SaleOrderLine(models.Model):
@@ -31,6 +33,9 @@ class SaleOrderLine(models.Model):
 
     order_item_id = fields.Char('Shopee Order Item ID')
     model_id = fields.Char('Model ID')
+    model_original_price = fields.Float('Original Price')
+    model_discounted_price = fields.Float('Discounted Price')
+    invoiced_price = fields.Float('Invoiced Price')
 
 
 class SaleOrder(models.Model):
@@ -43,6 +48,7 @@ class SaleOrder(models.Model):
     shopee_order_status = fields.Char('Shopee Order Status')
     shopee_payment_method = fields.Char('Shopee Payment Method')
     shopee_shipping_carrier = fields.Char('Shopee Shipping Carrier')
+    shopee_package_list = fields.One2many('shopee.packege.list', 'order_id', 'Shopee Package')
 
 
 class ShopeeGetOrder(models.TransientModel):
