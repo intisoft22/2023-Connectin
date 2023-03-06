@@ -30,6 +30,32 @@
                             <field name="shopee_payment_method" />
                             <field name="shopee_shipping_carrier" />
                         </group>
+                        <field name="shopee_package_list" >
+                            <tree>
+                                <field name="package_number" />
+                                <field name="logistics_status" />
+                                <field name="shipping_carrier" />
+                            </tree>
+                            <form>
+                                <group>
+                                    <field name="package_number" />
+                                    <field name="logistics_status" />
+                                    <field name="shipping_carrier" />
+                                </group>
+                                <field name="item_list" >
+                                    <tree>
+                                        <field name="product_id" />
+                                        <field name="model_id" />
+                                        <field name="quantity" />
+                                    </tree>
+                                    <form>
+                                        <field name="product_id" />
+                                        <field name="model_id" />
+                                        <field name="quantity" />
+                                    </form>
+                                </field>
+                            </form>
+                        </field>
                     </page>
                 </page>
             </field>
