@@ -11,7 +11,12 @@ import urllib.request
 from odoo import http
 import requests
 from odoo.exceptions import AccessError
+import base64
 
+from odoo import api, fields, models, _
+from odoo.exceptions import UserError
+from odoo.modules.module import get_module_resource
+from odoo.tools import formatLang
 # from odoo.addons.base.res.res_partner import WARNING_MESSAGE, WARNING_HELP
 
 # headers = {
@@ -37,6 +42,7 @@ header2 = {
 class ProductProduct(models.Model):
     _inherit = 'product.product'
 
+    shopee_model_id = fields.Char('Shopee Model ID')
     def post_upload_image(self, image, account, productid):
         for rec in self:
             timest = int(time.time())
@@ -73,11 +79,11 @@ class ProductProduct(models.Model):
 
             # print(params_file)
             # print(url)
-            files = [
-                ('image',
-                 ('image', open("/home/meyrina/Pictures/tesshopee.png", "rb"), "application/octet-stream"))
-                # Replace with actual file path
-            ]
+            # files = [
+            #     ('image',
+            #      ('image', open("/home/meyrina/Pictures/tesshopee.png", "rb"), "application/octet-stream"))
+            #     # Replace with actual file path
+            # ]
 
             payload = {}
 
@@ -137,8 +143,6 @@ class ProductProduct(models.Model):
             # gambar.append('sg-11134201-23020-9muyf8m5h1nve2')
             for logti in rec.shopee_logistic_ids:
                 valslog = {
-                    "size_id": 0,
-                    "shipping_fee": 0,
                     "enabled": logti.enable,
                     "is_free": logti.free,
                     "logistic_id": logti.logistic_id.shopee_logistic_id
@@ -177,6 +181,9 @@ class ProductProduct(models.Model):
                                 })
                             attrib['attribute_value_list'] = value_ids
                         attribute.append(attrib)
+            shopee_weight=0.0
+            if rec.shopee_weight>0:
+                shopee_weight=rec.shopee_weight/1000
             payload = json.dumps(
                 {
                     "description": rec.shopee_desc,
@@ -186,16 +193,16 @@ class ProductProduct(models.Model):
                         "brand_id": 0,
                         "original_brand_name": "NoBrand"
                     },
+                    "dimension": {
+                        "package_height": int(rec.shopee_height),
+                        "package_length": int(rec.shopee_length),
+                        "package_width": int(rec.shopee_width)
+                    },
+                    "weight": shopee_weight,
                     "logistic_info": logistik,
-                    "weight": rec.shopee_weight,
                     "item_status": rec.shopee_item_status,
                     "image": {
                         "image_id_list": gambar
-                    },
-                    "dimension": {
-                        "package_height": rec.shopee_height,
-                        "package_length": rec.shopee_length,
-                        "package_width": rec.shopee_width
                     },
                     "attribute_list": attribute,
                     "original_price": rec.shopee_price,
@@ -268,6 +275,50 @@ class ProductProduct(models.Model):
                 },
             }
 
+    def remove_marketplace_shopee(self):
+        for rec in self:
+            timest = int(time.time())
+            account = rec.shopee_account_id
+            host = account.url_api
+            path = "/api/v2/product/delete_item"
+            partner_id = account.partner_id_shopee
+            shop_id = account.shop_id_shopee
+            access_token = account.access_token_shopee
+            tmp = account.partner_key_shopee
+            partner_key = tmp.encode()
+            tmp_base_string = "%s%s%s%s%s" % (partner_id, path, timest, access_token, shop_id)
+            base_string = tmp_base_string.encode()
+            sign = hmac.new(partner_key, base_string, hashlib.sha256).hexdigest()
+            url = host + path + "?access_token=%s&partner_id=%s&shop_id=%s&timestamp=%s&sign=%s" % (
+                access_token, partner_id, shop_id, timest, sign)
+
+            payload = json.dumps(
+                {
+                    "item_id": int(rec.shopee_product_id),
+
+
+                }
+            )
+            print(url)
+            print(payload)
+            headers = {'Content-Type': 'application/json'}
+            response = requests.request("POST", url, headers=headers, data=payload, allow_redirects=False)
+            print(response.text)
+            json_loads = json.loads(response.text)
+
+            rec.shopee_product_id=False
+
+            return {
+                'type': 'ir.actions.client',
+                'tag': 'display_notification',
+                'params': {
+                    'title': _("Notification"),
+
+                    'message': 'Upload Product ',
+                    # 'type': 'success',
+                    'sticky': True,  # True/False will display for few seconds if false
+                },
+            }
 
 class ProductTemplate(models.Model):
     _inherit = 'product.template'
@@ -298,6 +349,16 @@ class ProductTemplate(models.Model):
     shopee_sku = fields.Char('SKU')
     shopee_logistic_ids = fields.One2many('shopee.logistic.product', 'product_tmpl_id', 'Logistic')
     shopee_attributes_ids = fields.One2many('shopee.product.attribute.product', 'product_tmpl_id', 'Attribute')
+    shopee_image_ids = fields.One2many('shopee.image.product', 'product_tmpl_id', 'Image')
+    shopee_variant_product_ids = fields.One2many('shopee.attribute.variant.product', 'product_tmpl_id', 'Variant')
+    shopee_variant_product_detail_ids = fields.One2many('shopee.attribute.variant.detail', 'product_tmpl_id', 'Variant Detail')
+
+    # shopee_attribute_line_ids = fields.One2many('product.template.attribute.line', 'product_tmpl_id', 'Product Attributes', copy=True)
+
+    def write(self, vals):
+        print(vals)
+        res = super(ProductTemplate, self).write(vals)
+        return res
 
     @api.depends('shopee_category_id')
     def _compute_shopee_brand_id_domain(self):
@@ -322,12 +383,472 @@ class ProductTemplate(models.Model):
                     [('id', '=', 0)]
                 )
 
+    def post_upload_image(self, image, account, productid):
+        for rec in self:
+            timest = int(time.time())
+            host = account.url_api
+            path = "/api/v2/media_space/upload_image"
+            partner_id = account.partner_id_shopee
+            shop_id = account.shop_id_shopee
+            access_token = account.access_token_shopee
+            tmp = account.partner_key_shopee
+            partner_key = tmp.encode()
+            tmp_base_string = "%s%s%s" % (partner_id, path, timest)
+            base_string = tmp_base_string.encode()
+            sign = hmac.new(partner_key, base_string, hashlib.sha256).hexdigest()
+            url = host + path + "?partner_id=%s&timestamp=%s&sign=%s" % (
+                partner_id, timest, sign)
+            print(image)
+            print("====================")
+
+            params_file = []
+            attachmentts = self.env['ir.attachment'].search(
+                [('res_model', '=', 'product.template'), ('res_field', '=', 'image_1920'), ('res_id', '=', productid)])
+            params_file = []
+            print(attachmentts)
+            for attachmentt in attachmentts:
+                filepath = attachmentt._full_path(attachmentt.store_fname)
+                print(filepath)
+                file_attach = ('image', ('image', open(filepath, "rb"), 'application/octet-stream'))
+                # file_attach = ('file', ('image', open(filepath, "rb"), attachmentt.mimetype))
+                # file_attach = ('file', (attachmentt.datas_fname, open(filepath, "rb"), attachmentt.mimetype))
+                params_file.append(file_attach)
+            # response = requests.post(
+            #     url=('%s/other/v1/setSalesOrderCompletewithFiles' % (company_ldap.forca_ws.strip())), headers={
+            #         'Forca-Token': self.env.user.forca_token
+            #     }, data=params_txt, files=params_file)
+
+            # print(params_file)
+            # print(url)
+            # files = [
+            #     ('image',
+            #      ('image', open("/home/meyrina/Pictures/tesshopee.png", "rb"), "application/octet-stream"))
+            #     # Replace with actual file path
+            # ]
+
+            payload = {}
+
+            # files2 = json.dumps({
+            #     files
+            # })
+            headers = {
+            }
+            # response = requests.request("GET", url, headers=headers, data=payload, allow_redirects=False)
+
+            response = requests.request("POST", url, headers=headers, data=payload, files=params_file,
+                                        allow_redirects=False)
+            print("===========images===========================")
+            print(response.text)
+            json_loads = json.loads(response.text)
+
+            # rec.access_token_shopee = json_loads['access_token']
+            return2 = []
+            datas = self.env['product.template']
+            try:
+                if json_loads:
+                    # print(json_loads['response'])
+                    # print("responese==========================")
+                    # print(json_loads['response']['image_info'])
+                    # print("image_info==========================")
+                    # print()
+                    # print("image_id==========================")
+                    if json_loads['error'] == 'error_param':
+                        return2.append(str(json_loads['message']))
+                    else:
+                        return json_loads['response']['image_info']['image_id']
+            except Exception as e:
+                return2.append(str(e))
+
+    def multipost_upload_image(self,  account, id_image):
+        for rec in self:
+            timest = int(time.time())
+            host = account.url_api
+            path = "/api/v2/media_space/upload_image"
+            partner_id = account.partner_id_shopee
+            shop_id = account.shop_id_shopee
+            access_token = account.access_token_shopee
+            tmp = account.partner_key_shopee
+            partner_key = tmp.encode()
+            tmp_base_string = "%s%s%s" % (partner_id, path, timest)
+            base_string = tmp_base_string.encode()
+            sign = hmac.new(partner_key, base_string, hashlib.sha256).hexdigest()
+            url = host + path + "?partner_id=%s&timestamp=%s&sign=%s" % (
+                partner_id, timest, sign)
+
+            params_file = []
+            attachmentts = self.env['ir.attachment'].search(
+                [('res_model', '=', 'shopee.image.product'), ('res_field', '=', 'image_1920'), ('res_id', '=', id_image)])
+            params_file = []
+            print(attachmentts)
+            for attachmentt in attachmentts:
+                filepath = attachmentt._full_path(attachmentt.store_fname)
+                print(filepath)
+                file_attach = ('image', ('image', open(filepath, "rb"), 'application/octet-stream'))
+                # file_attach = ('file', ('image', open(filepath, "rb"), attachmentt.mimetype))
+                # file_attach = ('file', (attachmentt.datas_fname, open(filepath, "rb"), attachmentt.mimetype))
+                params_file.append(file_attach)
+            # response = requests.post(
+            #     url=('%s/other/v1/setSalesOrderCompletewithFiles' % (company_ldap.forca_ws.strip())), headers={
+            #         'Forca-Token': self.env.user.forca_token
+            #     }, data=params_txt, files=params_file)
+
+            # print(params_file)
+            # print(url)
+            # files = [
+            #     ('image',
+            #      ('image', open("/home/meyrina/Pictures/tesshopee.png", "rb"), "application/octet-stream"))
+            #     # Replace with actual file path
+            # ]
+
+            payload = {}
+
+            # files2 = json.dumps({
+            #     files
+            # })
+            headers = {
+            }
+            # response = requests.request("GET", url, headers=headers, data=payload, allow_redirects=False)
+
+            response = requests.request("POST", url, headers=headers, data=payload, files=params_file,
+                                        allow_redirects=False)
+            print("===========images===========================")
+            print(response.text)
+            json_loads = json.loads(response.text)
+
+            # rec.access_token_shopee = json_loads['access_token']
+            return2 = []
+            datas = self.env['product.template']
+            try:
+                if json_loads:
+                    # print(json_loads['response'])
+                    # print("responese==========================")
+                    # print(json_loads['response']['image_info'])
+                    # print("image_info==========================")
+                    # print()
+                    # print("image_id==========================")
+                    if json_loads['error'] == 'error_param':
+                        return2.append(str(json_loads['message']))
+                    else:
+                        return json_loads['response']['image_info']['image_id']
+            except Exception as e:
+                return2.append(str(e))
+
+    def upload_marketplace_shopee_create(self):
+        for rec in self:
+            timest = int(time.time())
+            account = rec.shopee_account_id
+            host = account.url_api
+            path = "/api/v2/product/add_item"
+            partner_id = account.partner_id_shopee
+            shop_id = account.shop_id_shopee
+            access_token = account.access_token_shopee
+            tmp = account.partner_key_shopee
+            partner_key = tmp.encode()
+            tmp_base_string = "%s%s%s%s%s" % (partner_id, path, timest, access_token, shop_id)
+            base_string = tmp_base_string.encode()
+            sign = hmac.new(partner_key, base_string, hashlib.sha256).hexdigest()
+            url = host + path + "?access_token=%s&partner_id=%s&shop_id=%s&timestamp=%s&sign=%s" % (
+                access_token, partner_id, shop_id, timest, sign)
+            print(url)
+            gambar = []
+            logistik = []
+            gambarid = self.post_upload_image(rec.image_1920, account, rec.id)
+            for img in rec.shopee_image_ids:
+                gambarid2 = self.multipost_upload_image( account, img.id)
+                gambar.append(gambarid2)
+
+            print(gambarid)
+            gambar.append(gambarid)
+            # gambar.append('sg-11134201-23020-9muyf8m5h1nve2')
+            for logti in rec.shopee_logistic_ids:
+                valslog = {
+                    "enabled": logti.enable,
+                    "is_free": logti.free,
+                    "logistic_id": logti.logistic_id.shopee_logistic_id
+
+                }
+                logistik.append(valslog)
+            attribute = []
+            if rec.shopee_attributes_ids:
+                for attr in rec.shopee_attributes_ids:
+                    if attr.attribute_value_str or attr.attribute_value_id or attr.attribute_value_ids:
+                        attrib = {
+                            "attribute_id": attr.attribute_id.attribute_id,
+                            "attribute_value_list": [],
+
+
+                        }
+                        if attr.attribute_id.input_type == 'TEXT_FILED':
+                            attrib['attribute_value_list'] = [
+                                {
+                                    "value_id": 0,
+                                    "original_value_name": attr.attribute_value_str,
+                                    "value_unit": ""
+                                }
+                            ]
+                        elif attr.attribute_id.input_type  in  [ 'COMBO_BOX','DROP_DOWN']:
+                            attrib['attribute_value_list'] = [
+                                {
+                                    "value_id": attr.attribute_value_id.id,
+                                }
+                            ]
+                        elif attr.attribute_id.input_type in  ['MULTIPLE_SELECT','MULTIPLE_SELECT_COMBO_BOX']:
+                            value_ids=[]
+                            for at in attr.attribute_value_ids:
+                                value_ids.append({
+                                    "value_id": at.value_id,
+                                })
+                            attrib['attribute_value_list'] = value_ids
+                        attribute.append(attrib)
+            shopee_weight=0.0
+            if rec.shopee_weight>0:
+                shopee_weight=rec.shopee_weight/1000
+            payload = json.dumps(
+                {
+                    "description": rec.shopee_desc,
+                    "item_name": rec.shopee_name,
+                    "category_id": rec.shopee_category_id.shopee_category_id,
+                    "brand": {
+                        "brand_id": 0,
+                        "original_brand_name": "NoBrand"
+                    },
+                    "dimension": {
+                        "package_height": int(rec.shopee_height),
+                        "package_length": int(rec.shopee_length),
+                        "package_width": int(rec.shopee_width)
+                    },
+                    "weight": shopee_weight,
+                    "logistic_info": logistik,
+                    "item_status": rec.shopee_item_status,
+                    "image": {
+                        "image_id_list": gambar
+                    },
+                    "attribute_list": attribute,
+                    "original_price": rec.shopee_price,
+                    "seller_stock": [
+                        {
+                            "stock": 0
+                        }
+                    ],
+
+                }
+            )
+            print(url)
+            print(payload)
+            headers = {'Content-Type': 'application/json'}
+            response = requests.request("POST", url, headers=headers, data=payload, allow_redirects=False)
+            print(response.text)
+            json_loads = json.loads(response.text)
+            return2 = []
+            if json_loads:
+                if json_loads['error'] == 'error_param':
+                    return2.append(str(json_loads['message']))
+                else:
+                    if json_loads['response']:
+                        if json_loads['response']['item_id']:
+                            rec.shopee_product_id=json_loads['response']['item_id']
+
+            return {
+                'type': 'ir.actions.client',
+                'tag': 'display_notification',
+                'params': {
+                    'title': _("Notification"),
+
+                    'message': 'Upload Product ',
+                    # 'type': 'success',
+                    'sticky': True,  # True/False will display for few seconds if false
+                },
+            }
+
+    def upload_marketplace_shopee_update(self):
+        for rec in self:
+            timest = int(time.time())
+            account = rec.shopee_account_id
+            host = account.url_api
+            path = "/api/v2/product/update_item"
+            partner_id = account.partner_id_shopee
+            shop_id = account.shop_id_shopee
+            access_token = account.access_token_shopee
+            tmp = account.partner_key_shopee
+            partner_key = tmp.encode()
+            tmp_base_string = "%s%s%s%s%s" % (partner_id, path, timest, access_token, shop_id)
+            base_string = tmp_base_string.encode()
+            sign = hmac.new(partner_key, base_string, hashlib.sha256).hexdigest()
+            url = host + path + "?access_token=%s&partner_id=%s&shop_id=%s&timestamp=%s&sign=%s" % (
+                access_token, partner_id, shop_id, timest, sign)
+            print(url)
+            gambar = []
+            logistik = []
+            gambarid = self.post_upload_image(rec.image_1920, account, rec.id)
+            print(gambarid)
+            gambar.append(gambarid)
+
+            for img in rec.shopee_image_ids:
+                gambarid2 = self.post_upload_image(img.image_1920, account, rec.id)
+                gambar.append(gambarid2)
+            # gambar.append('sg-11134201-23020-9muyf8m5h1nve2')
+            for logti in rec.shopee_logistic_ids:
+                valslog = {
+                    "enabled": logti.enable,
+                    "is_free": logti.free,
+                    "logistic_id": logti.logistic_id.shopee_logistic_id
+
+                }
+                logistik.append(valslog)
+            attribute = []
+            if rec.shopee_attributes_ids:
+                for attr in rec.shopee_attributes_ids:
+                    if attr.attribute_value_str or attr.attribute_value_id or attr.attribute_value_ids:
+                        attrib = {
+                            "attribute_id": attr.attribute_id.attribute_id,
+                            "attribute_value_list": [],
+
+
+                        }
+                        if attr.attribute_id.input_type == 'TEXT_FILED':
+                            attrib['attribute_value_list'] = [
+                                {
+                                    "value_id": 0,
+                                    "original_value_name": attr.attribute_value_str,
+                                    "value_unit": ""
+                                }
+                            ]
+                        elif attr.attribute_id.input_type  in  [ 'COMBO_BOX','DROP_DOWN']:
+                            attrib['attribute_value_list'] = [
+                                {
+                                    "value_id": attr.attribute_value_id.id,
+                                }
+                            ]
+                        elif attr.attribute_id.input_type in  ['MULTIPLE_SELECT','MULTIPLE_SELECT_COMBO_BOX']:
+                            value_ids=[]
+                            for at in attr.attribute_value_ids:
+                                value_ids.append({
+                                    "value_id": at.value_id,
+                                })
+                            attrib['attribute_value_list'] = value_ids
+                        attribute.append(attrib)
+            shopee_weight=0.0
+            if rec.shopee_weight>0:
+                shopee_weight=rec.shopee_weight/1000
+            payload = json.dumps(
+                {
+                    "description": rec.shopee_desc,
+                    "item_name": rec.shopee_name,
+                    "item_id": int(rec.shopee_product_id),
+                    "category_id": rec.shopee_category_id.shopee_category_id,
+                    "brand": {
+                        "brand_id": 0,
+                        "original_brand_name": "NoBrand"
+                    },
+                    "dimension": {
+                        "package_height": int(rec.shopee_height),
+                        "package_length": int(rec.shopee_length),
+                        "package_width": int(rec.shopee_width)
+                    },
+                    "weight": shopee_weight,
+                    "logistic_info": logistik,
+                    "item_status": rec.shopee_item_status,
+                    "image": {
+                        "image_id_list": gambar
+                    },
+                    "attribute_list": attribute,
+                    "original_price": rec.shopee_price,
+                    "seller_stock": [
+                        {
+                            "stock": 0
+                        }
+                    ],
+
+                }
+            )
+            print(url)
+            print(payload)
+            headers = {'Content-Type': 'application/json'}
+            response = requests.request("POST", url, headers=headers, data=payload, allow_redirects=False)
+            print(response.text)
+
+
+            json_loads = json.loads(response.text)
+            return2 = []
+            if json_loads:
+                if json_loads['error'] == 'error_param':
+                    return2.append(str(json_loads['message']))
+                else:
+                    if json_loads['response']:
+                        if json_loads['response']['item_id']:
+                            rec.shopee_product_id=json_loads['response']['item_id']
+
+            return {
+                'type': 'ir.actions.client',
+                'tag': 'display_notification',
+                'params': {
+                    'title': _("Notification"),
+
+                    'message': 'Upload Product ',
+                    # 'type': 'success',
+                    'sticky': True,  # True/False will display for few seconds if false
+                },
+            }
+
+    def upload_marketplace_shopee_remove(self):
+        for rec in self:
+            timest = int(time.time())
+            account = rec.shopee_account_id
+            host = account.url_api
+            path = "/api/v2/product/delete_item"
+            partner_id = account.partner_id_shopee
+            shop_id = account.shop_id_shopee
+            access_token = account.access_token_shopee
+            tmp = account.partner_key_shopee
+            partner_key = tmp.encode()
+            tmp_base_string = "%s%s%s%s%s" % (partner_id, path, timest, access_token, shop_id)
+            base_string = tmp_base_string.encode()
+            sign = hmac.new(partner_key, base_string, hashlib.sha256).hexdigest()
+            url = host + path + "?access_token=%s&partner_id=%s&shop_id=%s&timestamp=%s&sign=%s" % (
+                access_token, partner_id, shop_id, timest, sign)
+
+            payload = json.dumps(
+                {
+                    "item_id": int(rec.shopee_product_id),
+
+
+                }
+            )
+            print(url)
+            print(payload)
+            headers = {'Content-Type': 'application/json'}
+            response = requests.request("POST", url, headers=headers, data=payload, allow_redirects=False)
+            print(response.text)
+            json_loads = json.loads(response.text)
+
+            rec.shopee_product_id=False
+
+            return {
+                'type': 'ir.actions.client',
+                'tag': 'display_notification',
+                'params': {
+                    'title': _("Notification"),
+
+                    'message': 'Upload Product ',
+                    # 'type': 'success',
+                    'sticky': True,  # True/False will display for few seconds if false
+                },
+            }
+
     def upload_marketplace_shopee(self):
         for rec in self:
-            product = self.env['product.product']
-            product_ids = product.search([('product_tmpl_id', '=', rec.id)])
-            for prod in product_ids:
-                prod.upload_marketplace_shopee()
+            if not rec.shopee_product_id:
+
+                rec.upload_marketplace_shopee_create()
+            else:
+                rec.upload_marketplace_shopee_update()
+
+    def remove_marketplace_shopee(self):
+        for rec in self:
+            if rec.shopee_product_id:
+
+                rec.upload_marketplace_shopee_remove()
+
 
     def get_attribute(self, shopee_categ_id):
         for rec in self:
@@ -865,3 +1386,15 @@ class ProductTemplate(models.Model):
                             updated = datas.write(vals_product)
                         else:
                             created = datas.create(vals_product)
+
+class ShopeeImageProduct(models.Model):
+    _name = "shopee.image.product"
+    _description = "Shopee Image in Product"
+
+    @api.model
+    def _default_image(self):
+        image_path = get_module_resource('lunch', 'static/img', 'lunch.png')
+        return base64.b64encode(open(image_path, 'rb').read())
+    product_tmpl_id = fields.Many2one('product.template', index=True, required=True)
+    product_id = fields.Many2one('product.product', index=True)
+    image_1920 = fields.Image(default=_default_image)

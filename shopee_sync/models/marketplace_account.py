@@ -672,7 +672,7 @@ class MarketplaceAccount(models.Model):
             }
     def get_dependencies(self):
         for rec in self:
-            # self.get_category()
+            self.get_category()
             self.get_logistic()
             return {
                 'type': 'ir.actions.client',

@@ -13,6 +13,7 @@
         ],
 
     'data': [
+        'wizards/add_variant_product_view.xml',
         'views/product.xml',
         'views/shopee_product_category_view.xml',
         'views/shopee_brand_view.xml',
