@@ -31,11 +31,11 @@ class ShopeePackageList(models.Model):
 class SaleOrderLine(models.Model):
     _inherit = 'sale.order.line'
 
-    order_item_id = fields.Char('Shopee Order Item ID')
-    model_id = fields.Char('Model ID')
-    model_original_price = fields.Float('Original Price')
-    model_discounted_price = fields.Float('Discounted Price')
-    invoiced_price = fields.Float('Invoiced Price')
+    shopee_order_item_id = fields.Char('Shopee Order Item ID')
+    shopee_model_id = fields.Char('Model ID')
+    shopee_model_original_price = fields.Float('Original Price')
+    shopee_model_discounted_price = fields.Float('Discounted Price')
+    shopee_invoiced_price = fields.Float('Invoiced Price')
 
 
 class SaleOrder(models.Model):

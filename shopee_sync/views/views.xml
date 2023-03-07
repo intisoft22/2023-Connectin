@@ -19,6 +19,16 @@
             <field name="model">sale.order</field>
             <field name="inherit_id" ref="sale.view_order_form"/>
             <field name="arch" type="xml">
+                <xpath expr="//field[@name='order_line']/tree/field[@name='price_unit']" position="after">
+                    <field name="shopee_model_original_price" />
+                    <field name="shopee_model_discounted_price" />
+                    <field name="shopee_invoiced_price" />
+                </xpath>
+                <xpath expr="//field[@name='order_line']/form/group/group[1]/field[@name='price_unit']" position="after">
+                    <field name="shopee_model_original_price" />
+                    <field name="shopee_model_discounted_price" />
+                    <field name="shopee_invoiced_price" />
+                </xpath>
                 <page name="order_lines" position="after">
                     <page string="Shopee Data" name="shopee_data">
                         <group>

@@ -241,7 +241,7 @@ class MarketplaceAccount(models.Model):
                 else:
                     for jload in json_loads['response']['item_list']:
                         sequence += 1
-                        data_ready = datas.search([('shopee_product_id', '=', str(jload['item_id']))])
+                        data_ready = datas.search([('shopee_product_id', '=', jload['item_id'])])
                         category_id = False
                         # if 'category_id' in jload:
                         #     # category_id = self.env['product.category'].search(
@@ -250,12 +250,15 @@ class MarketplaceAccount(models.Model):
                         if category_id is False:
                             category_id = self.env['product.category'].search([('name', '=', 'All')])
                         vals_product = {
-                            'shopee_product_id': str(jload['item_id']),
+                            'shopee_product_id': jload['item_id'],
                             'categ_id': category_id.id,
                             'name': jload['item_name'],
+                            'shopee_name': jload['item_name'],
                             'weight': jload['weight'],
                             'shopee_product_status': jload['item_status'],
+                            'shopee_item_status': jload['item_status'],
                             'sequence': sequence,
+                            'type': 'product',
                         }
                         print(vals_product)
                         if data_ready:
@@ -461,14 +464,16 @@ class MarketplaceAccount(models.Model):
                         #     recipient = str(jload['recipient_address']['name']) + ' (' + str(jload['recipient_address']['phone']) + ') /n' + str(jload['recipient_address']['full_address']) + ' /n ' + str(jload['recipient_address']['town']) + ' - ' + str(jload['recipient_address']['district']) + ' - ' + str(jload['recipient_address']['city']) + ' - ' + str(jload['recipient_address']['state']) + ' /n ' + str(jload['recipient_address']['region']) + ' /n ' + str(jload['recipient_address']['zipcode']) + ' /n '
 
                         for prod in jload['item_list']:
-                            product_ready = self.env['product.product'].search([('shopee_product_id', '=', str(prod['item_id']))], limit=1)
+                            product_ready = self.env['product.product'].search([('shopee_product_id', '=', prod['item_id'])], limit=1)
                             if product_ready:
                                 vals_item = {
                                     'product_id': product_ready.id,
                                     'name': product_ready.name + ' (model: '+ str(prod['model_name']) + ')',
                                     'product_uom_qty': prod['model_quantity_purchased'],
                                     # 'product_qty': jload['model_quantity_purchased'],
-                                    'price_unit': prod['model_original_price']
+                                    'price_unit': prod['model_original_price'],
+                                    'shopee_model_original_price': prod['model_original_price'],
+                                    'shopee_model_discounted_price': prod['model_discounted_price'],
                                 }
                                 item_list.append(vals_item)
 
@@ -495,15 +500,15 @@ class MarketplaceAccount(models.Model):
                                 updated = data_ready.write(vals_order)
                                 ada_data = True
                                 for prod in jload['item_list']:
-                                    product_ready = self.env['product.product'].search([('shopee_product_id', '=', str(prod['item_id']))], limit=1)
+                                    product_ready = self.env['product.product'].search([('shopee_product_id', '=', prod['item_id'])], limit=1)
                                     if product_ready:
                                         vals_item = {
                                             'product_id': product_ready.id,
                                             'name': product_ready.name + ' (model: '+ str(prod['model_name']) + ')',
                                             'product_uom_qty': prod['model_quantity_purchased'],
                                             'price_unit': prod['model_original_price'],
-                                            'model_original_price': prod['model_original_price'],
-                                            'model_discounted_price': prod['model_discounted_price'],
+                                            'shopee_model_original_price': prod['model_original_price'],
+                                            'shopee_model_discounted_price': prod['model_discounted_price'],
                                             # 'invoiced_price': prod['invoiced_price'],
                                             'order_id': data_ready.id
                                         }
@@ -545,7 +550,8 @@ class MarketplaceAccount(models.Model):
                             if jload['order_status'] != 'CANCELLED':
                                 created = datas.create(vals_order)
                                 for prod in jload['item_list']:
-                                    product_ready = self.env['product.product'].search([('shopee_product_id', '=', str(prod['item_id']))], limit=1)
+                                    note = ''
+                                    product_ready = self.env['product.product'].search([('shopee_product_id', '=', prod['item_id'])], limit=1)
                                     if product_ready:
                                         item_ready = False
                                         vals_item = {
@@ -553,8 +559,8 @@ class MarketplaceAccount(models.Model):
                                             'name': product_ready.name + ' (model: '+ str(prod['model_name']) + ')',
                                             'product_uom_qty': prod['model_quantity_purchased'],
                                             'price_unit': prod['model_original_price'],
-                                            'model_original_price': prod['model_original_price'],
-                                            'model_discounted_price': prod['model_discounted_price'],
+                                            'shopee_model_original_price': prod['model_original_price'],
+                                            'shopee_model_discounted_price': prod['model_discounted_price'],
                                             'order_id': created.id
                                         }
                                         for line in data_ready.order_line:
@@ -564,34 +570,37 @@ class MarketplaceAccount(models.Model):
                                         if not item_ready:
                                             create_line = self.env['sale.order.line'].create(vals_item)
                                     else:
-                                        updated = created.write({'note': 'produk belum tersikronisasi'})
+                                        note += 'Produk (' + str(prod['item_id']) + ' : ' + str(prod['item_name']) + ') sudah dihapus atau belum tersinkronisasi. /n'
+                                        updated = created.write({'note': note})
                                 created.action_confirm()
                                 so_id = created
                         if so_id:
-                            for pack in jload['package_list']:
-                                vals_pack = {
-                                    'package_number': pack['package_number'],
-                                    'logistics_status': pack['logistics_status'],
-                                    'shipping_carrier': pack['shipping_carrier'],
-                                    'order_id': so_id.id
-                                }
-                                package = self.env['shopee.packege.list']
-                                pack_ready = package.search([('package_number', '=', pack['package_number'])])
-                                if pack_ready:
-                                    pack_ready.write(vals_pack)
-                                else:
-                                    pack_ready = package.create(vals_pack)
-                                    for pitem in pack['item_list']:
-                                        pitem_ready = self.env['product.product'].search(
-                                            [('shopee_product_id', '=', str(pitem['item_id']))], limit=1)
-                                        if pitem_ready:
-                                            vals_pack_item = {
-                                                'product_id': pitem_ready.id,
-                                                'model_id': pitem['model_id'],
-                                                'quantity': pitem['quantity'],
-                                                'pack_id': pack_ready.id
-                                            }
-                                            pack_ready = self.env['shopee.packege.list.detail'].create(vals_pack_item)
+                            if so_id.order_line:
+                                for pack in jload['package_list']:
+                                    vals_pack = {
+                                        'package_number': pack['package_number'],
+                                        'logistics_status': pack['logistics_status'],
+                                        'shipping_carrier': pack['shipping_carrier'],
+                                        'order_id': so_id.id
+                                    }
+                                    package = self.env['shopee.packege.list']
+                                    pack_ready = package.search([('package_number', '=', pack['package_number'])])
+                                    if pack_ready:
+                                        pack_ready.write(vals_pack)
+                                        for pitem in pack['item_list']:
+                                            pitem_ready = self.env['product.product'].search(
+                                                [('shopee_product_id', '=', str(pitem['item_id']))], limit=1)
+                                            if pitem_ready:
+                                                vals_pack_item = {
+                                                    'product_id': pitem_ready.id,
+                                                    'model_id': pitem['model_id'],
+                                                    'quantity': pitem['model_quantity'],
+                                                    'pack_id': pack_ready.id
+                                                }
+                                                pack_ready = self.env['shopee.packege.list.detail'].create(vals_pack_item)
+
+                                    else:
+                                        pack_ready = package.create(vals_pack)
 
                             picking_ready = picking.search([('origin', '=', so_id.name)])
                             if picking_ready:
@@ -600,19 +609,22 @@ class MarketplaceAccount(models.Model):
                                         # if pline.product_uom_qty == pline.forecast_availability:
                                         pline.write({'quantity_done':pline.forecast_availability})
                                     picking_ready.button_validate()
-                            invoice_ready = invoice.search([('ref', '=', so_id.client_order_ref)])
-                            if not invoice_ready and so_id.partner_id and so_id.partner_id.property_account_receivable_id:
-                                context = {
-                                    'active_model': 'sale.order',
-                                    'active_ids': [so_id.id],
-                                    'active_id': so_id.id,
-                                }
-                                payment = self.env['sale.advance.payment.inv'].with_context(context).create({'advance_payment_method': 'delivered'})
-                                invoice_ready = payment.create_invoices()
-                            if invoice_ready:
-                                if invoice_ready.state == 'draft':
-                                    if status in {'READY_TO_SHIP','PROCESSED','SHIPPED','COMPLETED'}:
-                                        invoice_ready.action_post()
+                                invoice_ready = invoice.search([('ref', '=', so_id.client_order_ref)])
+                                if not invoice_ready and so_id.partner_id and so_id.partner_id.property_account_receivable_id:
+                                    context = {
+                                        'active_model': 'sale.order',
+                                        'active_ids': [so_id.id],
+                                        'active_id': so_id.id,
+                                    }
+                                    payment = self.env['sale.advance.payment.inv'].with_context(context).create({'advance_payment_method': 'delivered'})
+                                    payment.create_invoices()
+                                    invoice_ready = invoice.search([('ref', '=', so_id.client_order_ref)])
+                                print(invoice_ready)
+                                for inv in invoice_ready:
+                                    print(inv)
+                                    if inv.state == 'draft':
+                                        if status in {'READY_TO_SHIP','PROCESSED','SHIPPED','COMPLETED'}:
+                                            inv.action_post()
 
     def get_logistic(self):
         for rec in self:
@@ -711,120 +723,6 @@ class MarketplaceAccount(models.Model):
                 access_token, partner_id, shop_id, timest, sign)
             print(url)
             payload = {
-                "description":"Test add item ",
-                "item_name":"Hello Add item",
-                "category_id":14695,
-                "brand":{
-                    "brand_id":123,
-                    "original_brand_name":"nike"
-                },
-                "logistic_info":[
-                    {
-                        "sizeid":0,
-                        "shipping_fee":23.12,
-                        "enabled":'true',
-                        "is_free":'false',
-                        "logistic_id":80101
-                    },
-                    {
-                        "shipping_fee":20000,
-                        "enabled":'true',
-                        "is_free":'false',
-                        "logistic_id":80106
-                    },
-                    {
-                        "is_free":'false',
-                        "enabled":'false',
-                        "logistic_id":86668
-                    },
-                    {
-                        "enabled":'true',
-                        "price":12000,
-                        "is_free":'true',
-                        "logistic_id":88001
-                    },
-                    {
-                        "enabled":'false',
-                        "price":2,
-                        "is_free":'false',
-                        "logistic_id":88014
-                    }
-                ],
-                "weight":1.1,
-                "item_status":"UNLIST",
-                "image":{
-                    "image_id_list":[
-                        "a17bb867ecfe900e92e460c57b892590",
-                        "30aa47695d1afb99e296956699f67be6",
-                        "2ffd521a59da66f9489fa41b5824bb62"
-                    ]
-                },
-                "dimension":{
-                    "package_height":11,
-                    "package_length":11,
-                    "package_width":11
-                },
-                "attribute_list":[
-                    {
-                        "attribute_id":4811,
-                        "attribute_value_list":[
-                            {
-                                "value_id":0,
-                                "original_value_name":"",
-                                "value_unit":""
-                            }
-                        ]
-                    }
-                ],
-                "original_price":123.3,
-                "seller_stock": [
-                    {
-                        "stock": 0
-                    }
-                ],
-                "tax_info":{
-                    "ncm":"123",
-                    "same_state_cfop":"123",
-                    "diff_state_cfop":"123",
-                    "csosn":"123",
-                    "origin":"1",
-                    "cest":"12345",
-                    "measure_unit":"1"
-                },
-                "complaint_policy":{
-                    "warranty_time":"ONE_YEAR",
-                    "exclude_entrepreneur_warranty":"123",
-                    "diff_state_cfop":'true',
-                    "complaint_address_id":123456,
-                    "additional_information":""
-                },
-                "description_type":"extended",
-                "description_info":{
-                    "extended_description":{
-                        "field_list":[
-                            {
-                                "field_type":"text",
-                                "text":"text description 1"
-                            },
-                            {
-                                "field_type":"image",
-                                "image_info":{
-                                    "image_id":"1e076dff0699d8e778c06dd6c02df1fe"
-                                }
-                            },
-                            {
-                                "field_type":"image",
-                                "image_info":{
-                                    "image_id":"c07ac95ba7bb624d731e37fe2f0349de"
-                                }
-                            },
-                            {
-                                "field_type":"text",
-                                "text":"text description 1"
-                            }
-                        ]
-                    }
-                }
             }
 
             headers = {}
