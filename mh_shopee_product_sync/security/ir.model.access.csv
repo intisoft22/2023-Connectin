@@ -22,6 +22,8 @@ access_shopee_attribute_variant_product_user,sshopee.attribute.variant.product.u
 access_shopee_attribute_variant_product_manager,shopee.attribute.variant.product manager,model_shopee_attribute_variant_product,base.group_system,1,1,1,1
 access_shopee_attribute_variant_detail_user,sshopee.attribute.variant.product.detail.user,model_shopee_attribute_variant_detail,base.group_user,1,0,0,0
 access_shopee_attribute_variant_detail_manager,shopee.attribute.variant.product.detail manager,model_shopee_attribute_variant_detail,base.group_system,1,1,1,1
+access_shopee_value_variant_detail_user,sshopee.attribute.value.product.detail.user,model_shopee_value_variant_detail,base.group_user,1,1,1,1
+access_shopee_value_variant_detail_manager,shopee.attribute.value.product.detail manager,model_shopee_value_variant_detail,base.group_system,1,1,1,1
 access_shopee_attribute_variant_detail_wizard_manager,shopee.attribute.variant.product.detail wizard manager,model_add_variant_product,base.group_user,1,1,1,1
 access_shopee_attribute_variant_detail_wizard_line_manager,shopee.attribute.variant.product.detail.wizard.line manager,model_add_variant_product_line,base.group_user,1,1,1,1
 access_shopee_image_product_all,shopee.image.product.all,model_shopee_image_product,base.group_user,1,1,1,1

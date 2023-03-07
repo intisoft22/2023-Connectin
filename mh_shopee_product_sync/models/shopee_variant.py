@@ -60,36 +60,58 @@ class ShopeeAttributeVariantProduct(models.Model):
 
     product_tmpl_id = fields.Many2one('product.template', string="Product Template", ondelete='cascade', required=True,
                                       index=True)
-    attribute_id = fields.Many2one('shopee.attribute.variant', string="Attribute", ondelete='restrict', required=True,
+    attribute_id = fields.Many2one('shopee.attribute.variant', string="Attribute", ondelete='cascade', required=True,
                                    index=True)
     value_ids = fields.Many2many('shopee.attribute.value.variant', string="Values",
                                  domain="[('shopee_attribute_id', '=', attribute_id)]",
                                  relation='shopee_attribute_value_product_template_attribute_line_rel',
                                  ondelete='restrict')
+
+    shopee_variant_value_detail_ids = fields.One2many('shopee.value.variant.detail', 'attribute_id', 'Variant Detail')
     # product_template_value_ids = fields.One2many('product.template.attribute.value', 'attribute_line_id',
     #                                              string="Product Attribute Values")
 
+
+class ShopeeAttributeVariantValueDetail(models.Model):
+    _name = "shopee.value.variant.detail"
+    _description = "Shopee Value in Product Detail"
+
+    @api.model
+    def _default_image(self):
+        image_path = get_module_resource('lunch', 'static/img', 'lunch.png')
+        return base64.b64encode(open(image_path, 'rb').read())
+
+    attribute_id = fields.Many2one('shopee.attribute.variant.product', string="Attribute", ondelete='cascade',
+                                   index=True)
+    value_id = fields.Many2one('shopee.attribute.value.variant', string="Value", ondelete='restrict',
+                               index=True)
+
+    tier = fields.Integer('Tier')
+
+    image_1920 = fields.Image(default=_default_image)
+    # product_template_value_ids = fields.One2many('product.template.attribute.value', 'attribute_line_id',
 
 
 class ShopeeAttributeVariantDetail(models.Model):
     _name = "shopee.attribute.variant.detail"
     _description = "Shopee variant in Product Detail"
 
-    @api.model
-    def _default_image(self):
-        image_path = get_module_resource('lunch', 'static/img', 'lunch.png')
-        return base64.b64encode(open(image_path, 'rb').read())
+
     product_tmpl_id = fields.Many2one('product.template', string="Product Template", ondelete='cascade', required=True,
                                       index=True)
     attribute_id = fields.Many2one('shopee.attribute.variant', string="Attribute", ondelete='restrict',
                                    index=True)
+    product_id = fields.Many2one('product.product', string="Product", )
+    model_id = fields.Char(string="Model ID", )
     value_ids = fields.Many2many('shopee.attribute.value.variant', string="Values",
                                  relation='shopee_attribute_value_attribute_line_detail_rel',
                                  ondelete='restrict')
 
+    tier = fields.Char('Tier')
     shopee_price = fields.Float('Shopee Price', digits='Product Price')
 
-    image_1920 = fields.Image(default=_default_image)
+    # image_1920 = fields.Image(default=_default_image)
     # product_template_value_ids = fields.One2many('product.template.attribute.value', 'attribute_line_id',
     #                                              string="Product Attribute Values")
 
+ #                                              string="Product Attribute Values")
