@@ -83,7 +83,8 @@ class ShopeeValueVariantProduct(models.Model):
     value_id2 = fields.Many2one('product.attribute.value', string="Value", ondelete='restrict',
                                index=True)
 
-    tier = fields.Integer('Tier')
+    tier = fields.Char('Tier')
+    tier_tobe = fields.Integer('Tier Tobe' )
 
     image_1920 = fields.Image('Image')
     # product_template_value_ids = fields.One2many('product.template.attribute.value', 'attribute_line_id',
@@ -104,6 +105,7 @@ class ShopeeAttributeVariantDetail(models.Model):
                                  ondelete='cascade')
 
     tier = fields.Char('Tier')
+    tier_tobe = fields.Char('Tier tobe')
     shopee_price = fields.Float('Shopee Price', digits='Product Price')
 
     # image_1920 = fields.Image(default=_default_image)

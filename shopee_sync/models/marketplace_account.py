@@ -197,6 +197,7 @@ class MarketplaceAccount(models.Model):
                                     item_list = str(jload['item_id'])
                                 else:
                                     item_list = item_list + ',' + str(jload['item_id'])
+                        self.get_model_product_detail(item_list)
                         self.get_product_detail(item_list)
                         if json_loads['response']['total_count'] > (json_loads['response']['next_offset']+10):
                             self.get_product(json_loads['response']['next_offset'])
@@ -204,6 +205,69 @@ class MarketplaceAccount(models.Model):
                         return2.append(str(json_loads['response']['total_count']))
             print(item_list)
 
+    def get_model_product_detail(self, item_list):
+        for rec in self:
+            timest = int(time.time())
+            host = rec.url_api
+            path = "/api/v2/product/get_model_list"
+            partner_id = rec.partner_id_shopee
+            shop_id = rec.shop_id_shopee
+            access_token = rec.access_token_shopee
+            tmp = rec.partner_key_shopee
+            partner_key = tmp.encode()
+            tmp_base_string = "%s%s%s%s%s" % (partner_id, path, timest, access_token, shop_id)
+            base_string = tmp_base_string.encode()
+            sign = hmac.new(partner_key, base_string, hashlib.sha256).hexdigest()
+
+            url = host + path + "?item_id_list=%s&access_token=%s&partner_id=%s&shop_id=%s&timestamp=%s&sign=%s&need_complaint_policy=true&need_tax_info=true" % (
+            item_list, access_token, partner_id, shop_id, timest, sign)
+            print(url)
+            payload = json.dumps({
+            })
+            headers = {
+                'Content-Type': 'application/json'
+            }
+            response = requests.request("GET", url, headers=headers, data=payload, allow_redirects=False)
+
+            # print(response.text)
+            json_loads = json.loads(response.text)
+            print(json_loads)
+            # rec.access_token_shopee = json_loads['access_token']
+            return2 = []
+            sequence = 100
+            datas = self.env['product.template']
+            if json_loads:
+                if json_loads['error'] == 'error_param':
+                    return2.append(str(json_loads['msg']))
+                else:
+                    for jload in json_loads['response']['item_list']:
+                        sequence += 1
+                        data_ready = datas.search([('shopee_product_id', '=', jload['item_id'])])
+                        category_id = False
+                        # if 'category_id' in jload:
+                        #     # category_id = self.env['product.category'].search(
+                        #     category_id = self.env['shopee.product.category'].search(
+                        #         [('shopee_category_id', '=', jload['category_id'])]).id
+                        if category_id is False:
+                            category_id = self.env['product.category'].search([('name', '=', 'All')])
+                        vals_product = {
+                            'shopee_product_id': jload['item_id'],
+                            'categ_id': category_id.id,
+                            'name': jload['item_name'],
+                            'shopee_name': jload['item_name'],
+                            'weight': jload['weight'],
+                            'shopee_product_status': jload['item_status'],
+                            'shopee_item_status': jload['item_status'],
+                            'sequence': sequence,
+                            'type': 'product',
+                        }
+                        print(vals_product)
+                        if data_ready:
+                            print('update')
+                            datas.write(vals_product)
+                        else:
+                            print('create')
+                            datas.create(vals_product)
     def get_product_detail(self, item_list):
         for rec in self:
             timest = int(time.time())
