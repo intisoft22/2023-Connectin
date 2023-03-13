@@ -309,6 +309,7 @@ class ProductTemplate(models.Model):
                 }
                 variant_tier.append(valstier)
             detailvariant_tier = []
+            addmodelarray = []
             for dtiervariant in sorted(rec.shopee_variant_product_detail_ids, key=lambda b: (b.tier_tobe)):
                 tiersplit = (dtiervariant.tier_tobe).split(",")
                 tierarr = []
@@ -316,17 +317,31 @@ class ProductTemplate(models.Model):
                     tierarr.append(int(ts))
 
                 if self.variant_ok:
-                    valsdetailtier = {
-                        "tier_index": tierarr,
-                        "model_id": dtiervariant.model_id,
-                        "original_price": dtiervariant.shopee_price,
-                        "seller_stock": [
-                            {
-                                "stock": 0
-                            }
-                        ]
+                    if dtiervariant.model_id:
+                        valsdetailtier = {
+                            "tier_index": tierarr,
+                            "model_id": dtiervariant.model_id,
+                            "original_price": dtiervariant.shopee_price,
+                            "seller_stock": [
+                                {
+                                    "stock": 0
+                                }
+                            ]
 
-                    }
+                        }
+                        detailvariant_tier.append(valsdetailtier)
+                    else:
+                        addmodel = {
+                            "tier_index": tierarr,
+                            "original_price": dtiervariant.shopee_price,
+                            "seller_stock": [
+                                {
+                                    "stock": 0
+                                }
+                            ]
+
+                        }
+                        addmodelarray.append(addmodel)
                 else:
                     valsdetailtier = {
                         "tier_index": tierarr,
@@ -338,7 +353,7 @@ class ProductTemplate(models.Model):
                         ]
 
                     }
-                detailvariant_tier.append(valsdetailtier)
+                    detailvariant_tier.append(valsdetailtier)
             payload = json.dumps(
                 {
                     "item_id": int(rec.shopee_product_id),
@@ -353,6 +368,30 @@ class ProductTemplate(models.Model):
             print(response.text)
             json_loads = json.loads(response.text)
             return2 = []
+            for admodel in addmodelarray:
+                createmodeljson=self.create_model_product(int(rec.shopee_product_id),admodel['tier_index'],admodel['original_price'])
+                if createmodeljson:
+                    if createmodeljson['error'] != '':
+                        raise UserError(_(str(createmodeljson['message'])))
+                    else:
+                        if createmodeljson['response']:
+                            if createmodeljson['response']['model']:
+                                for m in createmodeljson['response']['model']:
+                                    tierindexstring = []
+                                    for tierl in m['tier_index']:
+                                        tierindexstring.append(str(tierl))
+                                    strtier = ','.join((tierindexstring))
+                                    print(m['tier_index'])
+                                    print(strtier)
+                                    variant_ids = self.env['shopee.attribute.variant.detail'].search(
+                                        [('tier_tobe', '=', strtier)])
+                                    print(variant_ids)
+                                    print("=============create")
+                                    if variant_ids:
+                                        variant_ids.product_id.shopee_model_id = m['model_id']
+                                        variant_ids.model_id = m['model_id']
+                                        variant_ids.tier = strtier
+                                        variant_ids.tier_tobe = strtier
 
             if not self.variant_ok:
                 if json_loads:
@@ -374,10 +413,13 @@ class ProductTemplate(models.Model):
                                     if variant_ids:
                                         variant_ids.product_id.shopee_model_id = m['model_id']
                                         variant_ids.model_id = m['model_id']
+                                        variant_ids.tier =strtier
+                                        variant_ids.tier_tobe = False
             else:
 
                 for dtiervariant in rec.shopee_variant_product_detail_ids:
                     dtiervariant.tier = dtiervariant.tier_tobe
+                    dtiervariant.tier_tobe = False
                 for tierv in rec.shopee_variant_product_ids:
                     for tierv2 in tierv.shopee_variant_value_detail_ids2:
                         tierv2.tier = tierv2.tier_tobe
@@ -431,6 +473,57 @@ class ProductTemplate(models.Model):
                     raise UserError(_(str(json_loads['message'])))
                 else:
                     return True
+
+    def create_model_product(self,item_id,tier,price):
+        for rec in self:
+            timest = int(time.time())
+            account = rec.shopee_account_id
+            host = account.url_api
+            path = "/api/v2/product/add_model"
+            partner_id = account.partner_id_shopee
+            shop_id = account.shop_id_shopee
+            access_token = account.access_token_shopee
+            tmp = account.partner_key_shopee
+            partner_key = tmp.encode()
+            tmp_base_string = "%s%s%s%s%s" % (partner_id, path, timest, access_token, shop_id)
+            base_string = tmp_base_string.encode()
+            sign = hmac.new(partner_key, base_string, hashlib.sha256).hexdigest()
+            url = host + path + "?access_token=%s&partner_id=%s&shop_id=%s&timestamp=%s&sign=%s" % (
+                access_token, partner_id, shop_id, timest, sign)
+
+            tierarr = []
+            for ts in tier:
+                tierarr.append(int(ts))
+            payload = json.dumps(
+                {
+                    "item_id": int(item_id),
+                    "model_list": [
+                        {
+                            "tier_index": tierarr,
+
+                            "original_price": price,
+                            "seller_stock": [
+                                {
+                                    "stock": 0
+                                }
+                            ]
+                        }
+                    ]
+                }
+            )
+            print(url)
+            print(payload)
+            headers = {'Content-Type': 'application/json'}
+            response = requests.request("POST", url, headers=headers, data=payload, allow_redirects=False)
+            print(response.text)
+            json_loads = json.loads(response.text)
+            return2 = []
+
+            if json_loads:
+                if json_loads['error'] != '':
+                    raise UserError(_(str(json_loads['message'])))
+                else:
+                    return json_loads
 
 
     def upload_marketplace_shopee_create(self):
@@ -692,6 +785,8 @@ class ProductTemplate(models.Model):
                             if rec.needupdate_shopee:
                                 self.add_model_product()
                                 rec.needupdate_shopee = False
+                                rec.changevariant_shopee = False
+                                rec.variant_ok = False
 
             return {
                 'type': 'ir.actions.client',
@@ -772,8 +867,8 @@ class ProductTemplate(models.Model):
 
     def reset_variant_shopee(self):
         for rec in self:
-            if rec.countvariant_odoo !=0:
-                raise UserError(_('Please delete product variant odoo first!'))
+            # if rec.countvariant_odoo !=0:
+            #     raise UserError(_('Please delete product variant odoo first!'))
             for dtiervariant in sorted(rec.shopee_variant_product_detail_ids, key=lambda b: (b.tier_tobe)):
                 item_id= dtiervariant.product_tmpl_id.shopee_product_id
                 model_id= dtiervariant.model_id
@@ -790,14 +885,26 @@ class ProductTemplate(models.Model):
                 tierlama = []
                 tierbaru = []
                 tier = []
+                seq=0
+
+                # for value2 in lne.shopee_variant_value_detail_ids2:
+                #     print(value.tier)
+                #     print(value.tier_tobe)
+                # for value2 in lne.shopee_variant_value_detail_ids2:
+                #
+                #     value2.tier_tobe=seq
+                #     seq+=1
                 for value in lne.shopee_variant_value_detail_ids2:
+                    print(value.tier)
+                    print(value.tier_tobe)
                     tierlama.append(value.tier)
                     tierbaru.append(value.tier_tobe)
                     tier.append(value)
                 detail_variant_lama.append(tierlama)
                 detail_variant_baru.append(tierbaru)
                 detail_variant.append(tier)
-
+            print(detail_variant_lama)
+            print(detail_variant_baru)
             if len(detail_variant) > 1:
                 for v0 in detail_variant[0]:
 
@@ -812,8 +919,9 @@ class ProductTemplate(models.Model):
                         else:
 
                             vals_shop = [v0.value_id2.id] + [v1.value_id2.id]
+
                             rec.shopee_variant_product_detail_ids = [
-                                (0, 0, {'shopee_price': rec.shopee_price, 'tier_tobe': tierbarustr,
+                                (0, 0, {'shopee_price': rec.shopee_price,'product_id':prd.id, 'tier_tobe': tierbarustr,
                                         'value_ids': [(6, 0, vals_shop)]})]
             else:
                 for v0 in detail_variant[0]:
@@ -827,9 +935,32 @@ class ProductTemplate(models.Model):
                     else:
 
                         vals_shop = [v0.value_id2.id]
+
                         rec.shopee_variant_product_detail_ids = [
-                            (0, 0, {'shopee_price': rec.shopee_price, 'tier_tobe': tierbarustr,
+                            (0, 0, {'shopee_price': rec.shopee_price,
+                                    'tier_tobe': tierbarustr,
                                     'value_ids': [(6, 0, vals_shop)]})]
+
+            for lne in rec.shopee_variant_product_detail_ids:
+                valuear = []
+                for at in lne.value_ids:
+                    valuear.append(at.name)
+
+                product_ids = self.env['product.product'].search(
+                    [('product_tmpl_id', '=', rec.id)])
+                for prd in product_ids:
+                    valueprd = []
+                    if prd.product_template_attribute_value_ids:
+                        for atprd in prd.product_template_attribute_value_ids:
+                            valueprd.append(atprd.name)
+                        sama = True
+                        for x in valueprd:
+                            if x not in valuear:
+                                sama = False
+                        if sama:
+                            lne.product_id = prd.id
+                if not lne.tier_tobe:
+                    lne.unlink()
             rec.needupdate_shopee = True
 
     def get_attribute(self, shopee_categ_id):

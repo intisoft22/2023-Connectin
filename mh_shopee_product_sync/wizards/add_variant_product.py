@@ -116,6 +116,8 @@ class AddVariantProduct(models.TransientModel):
 
         product_obj.needgenerate_shopee = False
         product_obj.needupdate_shopee = True
+        product_obj.changevariant_shopee = False
+        product_obj.variant_ok = False
         return {'type': 'ir.actions.act_window_close'}
 
 

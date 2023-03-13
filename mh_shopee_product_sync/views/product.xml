@@ -15,7 +15,7 @@
                     </div>
                 </xpath>
                 <xpath expr="//page[@name='inventory']" position="after">
-                    <page name='shopee_tab' string="Shopee"  attrs="{'invisible':[('is_shopee','!=',True)]}">
+                    <page name='shopee_tab' string="Shopee" attrs="{'invisible':[('is_shopee','!=',True)]}">
                         <group name="generalshopee">
                             <field name="shopee_account_id" attrs="{'required':[('is_shopee','=',True)]}"/>
                             <field name="shopee_product_id"/>
@@ -92,21 +92,25 @@
                     </group>
                     <separator string="Logistic Information"/>
                     <group>
-                        <label for="shopee_weight" />
+                        <label for="shopee_weight"/>
                         <div>
 
-                            <field name="shopee_weight" class="oe_inline" nolabel="1" attrs="{'required':[('is_shopee','=',True)]}"/>
+                            <field name="shopee_weight" class="oe_inline" nolabel="1"
+                                   attrs="{'required':[('is_shopee','=',True)]}"/>
                             gr
                         </div>
 
                         <label for="shopee_length" string="Size"/>
                         <div>
 
-                            <field name="shopee_length" class="oe_inline" nolabel="1" attrs="{'required':[('is_shopee','=',True)]}"/>
+                            <field name="shopee_length" class="oe_inline" nolabel="1"
+                                   attrs="{'required':[('is_shopee','=',True)]}"/>
                             cm X
-                            <field name="shopee_width" class="oe_inline" nolabel="1" attrs="{'required':[('is_shopee','=',True)]}"/>
+                            <field name="shopee_width" class="oe_inline" nolabel="1"
+                                   attrs="{'required':[('is_shopee','=',True)]}"/>
                             cm X
-                            <field name="shopee_height" class="oe_inline" nolabel="1" attrs="{'required':[('is_shopee','=',True)]}"/>
+                            <field name="shopee_height" class="oe_inline" nolabel="1"
+                                   attrs="{'required':[('is_shopee','=',True)]}"/>
                             cm
                         </div>
                         <field name="shopee_logistic_ids">
@@ -145,10 +149,13 @@
                         <field name="variant_ok"/>
                     </group>
                     <button name="%(mh_shopee_product_sync.action_view_add_variant_product)d" string="Generate Variant"
-                            type="action" class="btn-primary" attrs="{'invisible':[('needgenerate_shopee','!=',True)]}"/>
+                            type="action" class="btn-primary"
+                            attrs="{'invisible':[('needgenerate_shopee','!=',True)]}"/>
 
-                    <button name="update_variant_shopee_act" string="Update Variant" type="object" attrs="{'invisible':[('changevariant_shopee','!=',True)]}"/>
-                    <button name="reset_variant_shopee" string="Reset Variant" type="object"  attrs="{'invisible':[('needgenerate_shopee','=',True)]}"/>
+                    <button name="update_variant_shopee_act" string="Update Variant" type="object"
+                            attrs="{'invisible':[('changevariant_shopee','!=',True)]}"/>
+                    <button name="reset_variant_shopee" string="Reset Variant" type="object"
+                            attrs="{'invisible':[('needgenerate_shopee','=',True)]}"/>
                     <group name="variant_product">
                         <field name="shopee_variant_product_ids">
                             <tree create="false" delete="false">
@@ -160,17 +167,18 @@
                                     <field name="attribute_id2" readonly="1"/>
                                     <field name="value_ids2" widget="many2many_tags" readonly="1"/>
                                     <field name="shopee_variant_value_detail_ids2">
-                                        <tree editable="bottom" create="false" delete="false">
+                                        <tree editable="bottom" default_order="tier_tobe asc">
                                             <field name="tier_tobe" widget="handle"/>
-                                            <field name="tier" readonly="1"/>
-                                            <field name="value_id2" readonly="1"/>
+                                            <field name="tier" />
+                                            <field name="value_id2"/>
                                             <field name="image_1920" widget='image' class="oe_avatar"
                                                    options='{"zoom": true, "preview_image":"image_128"}'/>
+                                                <button name="delete_variant_act" string="Delete Variant" icon="fa-times" type="object"/>
 
                                         </tree>
                                         <form>
                                             <group>
-                                                <field name="tier_tobe" />
+                                                <field name="tier_tobe"/>
                                                 <field name="tier" readonly="1"/>
                                                 <field name="value_id2"/>
                                                 <field name="image_1920" widget='image' class="oe_avatar"
@@ -183,9 +191,9 @@
                             </form>
                         </field>
                         <field name="shopee_variant_product_detail_ids">
-                            <tree editable="bottom" create="false" delete="false" default_order="tier_tobe asc">
+                            <tree editable="bottom" create="false" default_order="tier_tobe asc">
                                 <field name="tier_tobe"/>
-                                <field name="tier" readonly="1"/>
+                                <field name="tier" />
                                 <field name="product_id"/>
                                 <field name="model_id"/>
                                 <field name="value_ids" widget="many2many_tags"/>

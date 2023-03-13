@@ -89,6 +89,62 @@ class ShopeeValueVariantProduct(models.Model):
     image_1920 = fields.Image('Image')
     # product_template_value_ids = fields.One2many('product.template.attribute.value', 'attribute_line_id',
 
+    def write(self, vals):
+        print(vals)
+        if 'tier_tobe' in vals:
+            tier_tobe = vals.get('tier_tobe')
+            if self.attribute_id:
+                if self.attribute_id.product_tmpl_id:
+                    self.attribute_id.product_tmpl_id.changevariant_shopee=True
+                    self.attribute_id.product_tmpl_id.variant_ok=True
+
+        res = super(ShopeeValueVariantProduct, self).write(vals)
+        return res
+
+
+    @api.model
+    def create(self, vals):
+        print(vals)
+        if vals.get('attribute_id'):
+            prd_attribute = self.env['shopee.attribute.variant.product'].search([('id','=',vals.get('attribute_id'))])
+            if prd_attribute:
+                prd_attribute.product_tmpl_id.changevariant_shopee=True
+                prd_attribute.product_tmpl_id.variant_ok=True
+                arrayvariant=[]
+                for variant in prd_attribute.value_ids2:
+                    arrayvariant.append(variant.id)
+                arrayvariant.append(vals.get('value_id2'))
+                print(arrayvariant)
+                prd_attribute.value_ids2=[(6,0,arrayvariant)]
+
+
+        return super(ShopeeValueVariantProduct, self).create(vals)
+
+    def unlink(self):
+        for record in self:
+
+            if record.attribute_id:
+                if record.attribute_id.product_tmpl_id:
+                    record.attribute_id.product_tmpl_id.changevariant_shopee = True
+                    record.attribute_id.product_tmpl_id.variant_ok = True
+                seq = 0
+
+                for value2 in record.attribute_id.shopee_variant_value_detail_ids2:
+                    print(value2.tier)
+                    print(value2.tier_tobe)
+                for value2 in record.attribute_id.shopee_variant_value_detail_ids2:
+
+                    value2.tier_tobe=seq
+                    seq+=1
+        super(ShopeeValueVariantProduct, self).unlink()
+
+    def delete_variant_act(self):
+        self.attribute_id.value_ids2=[(3,self.value_id2.id)]
+        self.attribute_id.product_tmpl_id.changevariant_shopee=True
+        self.attribute_id.product_tmpl_id.variant_ok=True
+        self.unlink()
+
+        return {'type': 'ir.actions.act_window_close'}
 
 class ShopeeAttributeVariantDetail(models.Model):
     _name = "shopee.attribute.variant.detail"
