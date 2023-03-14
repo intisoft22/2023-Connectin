@@ -94,6 +94,7 @@ class ProductCategory(models.Model):
 class ProductTemplate(models.Model):
     _inherit = 'product.template'
 
+    shopee_stock = fields.Char('Shopee Stock')
     shopee_product_id = fields.Char('Shopee Product ID')
     shopee_product_status = fields.Char('Shopee Product Status')
 

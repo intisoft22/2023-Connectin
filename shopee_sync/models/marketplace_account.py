@@ -177,8 +177,7 @@ class MarketplaceAccount(models.Model):
             headers = {}
             response = requests.request("GET", url, headers=headers, data=payload, allow_redirects=False)
 
-            print(response)
-            print(response.text)
+            # print(response)
             json_loads = json.loads(response.text)
 
             # rec.access_token_shopee = json_loads['access_token']
@@ -188,7 +187,7 @@ class MarketplaceAccount(models.Model):
             if json_loads:
                 if json_loads['error']:
                     return2.append(str(json_loads['message']))
-                    print(json_loads['message'])
+                    # print(json_loads['message'])
                 else:
                     if (json_loads['response']['total_count'] > 0):
                         for jload in json_loads['response']['item']:
@@ -294,7 +293,7 @@ class MarketplaceAccount(models.Model):
 
             # print(response.text)
             json_loads = json.loads(response.text)
-            print(json_loads)
+            # print(json_loads)
             # rec.access_token_shopee = json_loads['access_token']
             return2 = []
             sequence = 100
@@ -313,6 +312,12 @@ class MarketplaceAccount(models.Model):
                         #         [('shopee_category_id', '=', jload['category_id'])]).id
                         if category_id is False:
                             category_id = self.env['product.category'].search([('name', '=', 'All')])
+                        stock = 2000
+                        if 'stock_info_v2' in jload:
+                            # print(jload['stock_info_v2'])
+                            for sstock in jload['stock_info_v2']['seller_stock']:
+                                stock = sstock['stock']
+                                # print(stock)
                         vals_product = {
                             'shopee_product_id': jload['item_id'],
                             'categ_id': category_id.id,
@@ -321,15 +326,25 @@ class MarketplaceAccount(models.Model):
                             'weight': jload['weight'],
                             'shopee_product_status': jload['item_status'],
                             'shopee_item_status': jload['item_status'],
+                            'shopee_stock': str(stock),
                             'sequence': sequence,
                             'type': 'product',
                         }
-                        print(vals_product)
                         if data_ready:
+                            vals_product = {
+                                'shopee_product_id': jload['item_id'],
+                                'shopee_name': jload['item_name'],
+                                'weight': jload['weight'],
+                                'shopee_product_status': jload['item_status'],
+                                'shopee_item_status': jload['item_status'],
+                                'shopee_stock': str(stock),
+                            }
                             print('update')
-                            datas.write(vals_product)
+                            print(vals_product)
+                            data_ready.write(vals_product)
                         else:
                             print('create')
+                            print(vals_product)
                             datas.create(vals_product)
 
     def post_upload_image(self):
