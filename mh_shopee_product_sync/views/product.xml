@@ -17,6 +17,7 @@
                 <xpath expr="//page[@name='inventory']" position="after">
                     <page name='shopee_tab' string="Shopee" attrs="{'invisible':[('is_shopee','!=',True)]}">
                         <group name="generalshopee">
+                            <field name="dateupload_shopee"/>
                             <field name="shopee_account_id" attrs="{'required':[('is_shopee','=',True)]}"/>
                             <field name="shopee_product_id"/>
                             <field name="shopee_name" attrs="{'required':[('is_shopee','=',True)]}"/>
@@ -55,7 +56,7 @@
             <field name="arch" type="xml">
                 <xpath expr="//page[@name='shopee_tab']/group[@name='generalshopee']" position="before">
                     <button name="upload_marketplace_shopee" string="Upload" type="object" class="oe_highlight"/>
-                    <button name="remove_marketplace_shopee" string="Remove" type="object"/>
+                    <button name="remove_marketplace_shopee" string="Remove" type="object"   attrs="{'invisible':[('shopee_product_id','=',False)]}"/>
                 </xpath>
                 <xpath expr="//page[@name='shopee_tab']/group[@name='generalshopee']" position="after">
                     <separator string="Spesification"/>
@@ -71,8 +72,8 @@
                             <form>
                                 <sheet>
                                     <group>
-                                        <field name="attribute_id" readonly="1"/>
-                                        <field name="is_mandatory" readonly="1"/>
+                                        <field name="attribute_id" readonly="1" force_save="1"/>
+                                        <field name="is_mandatory" readonly="1" force_save="1"/>
                                         <field name="input_type" invisible="1"/>
                                         <field name="attribute_value_id" domain="[('attribute_id','=',attribute_id)]"
                                                attrs="{'invisible':[('input_type','not in',['COMBO_BOX','DROP_DOWN'])]}"/>
@@ -141,12 +142,12 @@
                     </group>
                     <separator string="Variant Information"/>
                     <group>
-                        <field name="countvariant_shopee"/>
-                        <field name="countvariant_odoo"/>
-                        <field name="needgenerate_shopee"/>
-                        <field name="needupdate_shopee"/>
-                        <field name="changevariant_shopee"/>
-                        <field name="variant_ok"/>
+                        <field name="countvariant_shopee" groups="base.group_no_one"/>
+                        <field name="countvariant_odoo" groups="base.group_no_one"/>
+                        <field name="needgenerate_shopee" groups="base.group_no_one"/>
+                        <field name="needupdate_shopee" groups="base.group_no_one"/>
+                        <field name="changevariant_shopee" groups="base.group_no_one"/>
+                        <field name="variant_ok" groups="base.group_no_one"/>
                     </group>
                     <button name="%(mh_shopee_product_sync.action_view_add_variant_product)d" string="Generate Variant"
                             type="action" class="btn-primary"
@@ -155,7 +156,7 @@
                     <button name="update_variant_shopee_act" string="Update Variant" type="object"
                             attrs="{'invisible':[('changevariant_shopee','!=',True)]}"/>
                     <button name="reset_variant_shopee" string="Reset Variant" type="object"
-                            attrs="{'invisible':[('needgenerate_shopee','=',True)]}"/>
+                            />
                     <group name="variant_product">
                         <field name="shopee_variant_product_ids">
                             <tree create="false" delete="false">
@@ -173,7 +174,7 @@
                                             <field name="value_id2"/>
                                             <field name="image_1920" widget='image' class="oe_avatar"
                                                    options='{"zoom": true, "preview_image":"image_128"}'/>
-                                                <button name="delete_variant_act" string="Delete Variant" icon="fa-times" type="object"/>
+<!--                                                <button name="delete_variant_act" string="Delete Variant" icon="fa-times" type="object"/>-->
 
                                         </tree>
                                         <form>

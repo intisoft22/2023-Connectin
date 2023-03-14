@@ -127,6 +127,7 @@ class ShopeeValueVariantProduct(models.Model):
                 if record.attribute_id.product_tmpl_id:
                     record.attribute_id.product_tmpl_id.changevariant_shopee = True
                     record.attribute_id.product_tmpl_id.variant_ok = True
+                    record.attribute_id.value_ids2=[(3,record.value_id2.id)]
                 seq = 0
 
                 for value2 in record.attribute_id.shopee_variant_value_detail_ids2:

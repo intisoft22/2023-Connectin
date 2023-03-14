@@ -86,6 +86,7 @@ class ProductTemplate(models.Model):
     needgenerate_shopee = fields.Boolean("Need Generate Variant", compute="_compute_variant_count", store=True)
     needupdate_shopee = fields.Boolean("Need Update Variant")
     changevariant_shopee = fields.Boolean("Change Variant")
+    dateupload_shopee = fields.Datetime("Shopee Upload Date")
 
     # shopee_attribute_line_ids = fields.One2many('product.template.attribute.line', 'product_tmpl_id', 'Product Attributes', copy=True)
 
@@ -278,7 +279,7 @@ class ProductTemplate(models.Model):
             timest = int(time.time())
             account = rec.shopee_account_id
             host = account.url_api
-            if self.variant_ok:
+            if self.variant_ok and self.dateupload_shopee:
                 path = "/api/v2/product/update_tier_variation"
             else:
                 path = "/api/v2/product/init_tier_variation"
@@ -316,7 +317,7 @@ class ProductTemplate(models.Model):
                 for ts in tiersplit:
                     tierarr.append(int(ts))
 
-                if self.variant_ok:
+                if self.variant_ok and self.dateupload_shopee:
                     if dtiervariant.model_id:
                         valsdetailtier = {
                             "tier_index": tierarr,
@@ -393,7 +394,16 @@ class ProductTemplate(models.Model):
                                         variant_ids.tier = strtier
                                         variant_ids.tier_tobe = strtier
 
-            if not self.variant_ok:
+            if self.variant_ok  and self.dateupload_shopee:
+
+                for dtiervariant in rec.shopee_variant_product_detail_ids:
+                    dtiervariant.tier = dtiervariant.tier_tobe
+                    dtiervariant.tier_tobe = False
+                for tierv in rec.shopee_variant_product_ids:
+                    for tierv2 in tierv.shopee_variant_value_detail_ids2:
+                        tierv2.tier = tierv2.tier_tobe
+            else:
+
                 if json_loads:
                     if json_loads['error'] != '':
                         raise UserError(_(str(json_loads['message'])))
@@ -415,14 +425,6 @@ class ProductTemplate(models.Model):
                                         variant_ids.model_id = m['model_id']
                                         variant_ids.tier =strtier
                                         variant_ids.tier_tobe = False
-            else:
-
-                for dtiervariant in rec.shopee_variant_product_detail_ids:
-                    dtiervariant.tier = dtiervariant.tier_tobe
-                    dtiervariant.tier_tobe = False
-                for tierv in rec.shopee_variant_product_ids:
-                    for tierv2 in tierv.shopee_variant_value_detail_ids2:
-                        tierv2.tier = tierv2.tier_tobe
 
             return {
                 'type': 'ir.actions.client',
@@ -835,6 +837,13 @@ class ProductTemplate(models.Model):
                     raise UserError(_(str(json_loads['message'])))
             rec.shopee_product_id = False
 
+            for lne in rec.shopee_variant_product_detail_ids:
+                lne.tier_tobe = lne.tier
+            product_ids = self.env['product.product'].search(
+                [('product_tmpl_id', '=', rec.id)])
+            for prd in product_ids:
+                prd.shopee_product_id=False
+                prd.shopee_model_id=False
             return {
                 'type': 'ir.actions.client',
                 'tag': 'display_notification',
@@ -850,11 +859,14 @@ class ProductTemplate(models.Model):
     def upload_marketplace_shopee(self):
         for rec in self:
             rec.shopee_account_id.get_token()
+            if  not rec.needupdate_shopee and rec.variant_ok:
+                raise UserError(_('Please update variant first!'))
             if not rec.shopee_product_id:
 
                 rec.upload_marketplace_shopee_create()
             else:
                 rec.upload_marketplace_shopee_update()
+            rec.dateupload_shopee=datetime.now()
 
             # if rec.shopee_variant_product_detail_ids:
             #     rec.variant_ok=True
@@ -867,14 +879,18 @@ class ProductTemplate(models.Model):
 
     def reset_variant_shopee(self):
         for rec in self:
-            # if rec.countvariant_odoo !=0:
-            #     raise UserError(_('Please delete product variant odoo first!'))
-            for dtiervariant in sorted(rec.shopee_variant_product_detail_ids, key=lambda b: (b.tier_tobe)):
-                item_id= dtiervariant.product_tmpl_id.shopee_product_id
-                model_id= dtiervariant.model_id
-                self.delete_model_product(item_id,model_id)
-            rec.shopee_variant_product_ids = False
-            rec.shopee_variant_product_detail_ids = False
+            if rec.countvariant_odoo !=0:
+                raise UserError(_('Please delete product variant odoo first!'))
+            if rec.shopee_variant_product_detail_ids:
+                for dtiervariant in sorted(rec.shopee_variant_product_detail_ids, key=lambda b: (b.tier_tobe)):
+                    item_id= dtiervariant.product_tmpl_id.shopee_product_id
+                    model_id= dtiervariant.model_id
+                    self.delete_model_product(item_id,model_id)
+                rec.shopee_variant_product_ids = False
+                rec.shopee_variant_product_detail_ids = False
+            else:
+
+                raise UserError(_('No Variant'))
 
     def update_variant_shopee_act(self):
         for rec in self:
@@ -921,7 +937,7 @@ class ProductTemplate(models.Model):
                             vals_shop = [v0.value_id2.id] + [v1.value_id2.id]
 
                             rec.shopee_variant_product_detail_ids = [
-                                (0, 0, {'shopee_price': rec.shopee_price,'product_id':prd.id, 'tier_tobe': tierbarustr,
+                                (0, 0, {'shopee_price': rec.shopee_price,'tier_tobe': tierbarustr,
                                         'value_ids': [(6, 0, vals_shop)]})]
             else:
                 for v0 in detail_variant[0]:
@@ -962,6 +978,7 @@ class ProductTemplate(models.Model):
                 if not lne.tier_tobe:
                     lne.unlink()
             rec.needupdate_shopee = True
+            rec.changevariant_shopee = False
 
     def get_attribute(self, shopee_categ_id):
         for rec in self:
