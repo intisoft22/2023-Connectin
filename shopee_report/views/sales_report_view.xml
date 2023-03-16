@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="report_tree" model="ir.ui.view">
+        <field name="name">sales.report.tree</field>
+        <field name="model">sales.report</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="marketplace_id"/>
+                <field name="month"/>
+                <field name="year"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="report_form" model="ir.ui.view">
+        <field name="name">sales.report.form</field>
+        <field name="model">sales.report</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button id="button_start" name="action_start" string="Start" class="btn-primary"
+                            states="draft" type="object"/>
+                    <button id="button_close" name="action_close" string="Validate" class="btn-primary"
+                            states="on_period"
+                            type="object"/>
+                    <button id="button_cancel" name="action_cancel" string="Cancel" states="draft,on_period,close"
+                            confirm="Are you sure to cancel ?" type="object"/>
+                    <button id="button_draft" name="action_draft" string="Reset To Draft" class="btn-primary"
+                            states="cancel" type="object"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,on_period,close"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="marketplace_id"
+                                   attrs="{'readonly': [('state', 'in', ('on_period','close', 'cancel'))]}"/>
+                            <field name="month"
+                                   attrs="{'readonly': [('state', 'in', ('on_period','close', 'cancel'))]}"/>
+                            <field name="year"
+                                   attrs="{'readonly': [('state', 'in', ('on_period','close', 'cancel'))]}"/>
+                            <button id="button_calculate" name="calculate_sale" string="Calculate" class="btn-primary"
+                                    states="on_period" type="object"/>
+                        </group>
+                        <group></group>
+                    </group>
+                    <notebook>
+                        <page string="Penjualan" name="sales_order_report">
+                            <field name="line_ids" readonly="1">
+                                <tree string="Penjualan" default_order="date">
+                                    <field name="date"/>
+                                    <field name="jual" sum="Total Penjualan" decoration-bf="1" optional="show"/>
+                                    <field name="disc" sum="Total Diskon Penjualan" decoration-bf="1" optional="show"/>
+                                    <field name="modals" sum="Total Cost Produk (hpp) dari Penjualan Harian" decoration-bf="1" optional="show"/>
+                                    <field name="biaya_admin" sum="Total Biaya Admin Penjualan" decoration-bf="1" optional="show"/>
+                                    <field name="net" sum="Total Net Penjualan" decoration-bf="1" optional="show"/>
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                    <group>
+                        <group>
+                            <field name="total_expense" attrs="{'readonly': [('state', 'in', ('draft','close', 'cancel'))]}"/>
+                        </group>
+                        <group>
+                            <field name="total_net_sell" force_save="1"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="report_action" model="ir.actions.act_window">
+        <field name="name">Generate Sales Report</field>
+        <field name="type">ir.actions.act_window</field>
+        <field name="res_model">sales.report</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first report!
+            </p>
+        </field>
+    </record>
+
+    <menuitem id="menu_generate_report"
+            name="Generate Report"
+            action="report_action"
+            parent="sale.menu_sale_report"
+            sequence="10"/>
+
+</odoo>
