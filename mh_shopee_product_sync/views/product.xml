@@ -8,6 +8,10 @@
             <field name="model">product.template</field>
             <field name="inherit_id" ref="product.product_template_form_view"/>
             <field name="arch" type="xml">
+                <field name="image_1920" position="replace">
+
+                    <field name="image_1920" widget="image" class="oe_avatar" required="True" options="{'preview_image': 'image_128'}"/>
+                </field>
                 <xpath expr="//div[@name='options']" position="inside">
                     <div>
                         <field name="is_shopee"/>
@@ -114,7 +118,7 @@
                                    attrs="{'required':[('is_shopee','=',True)]}"/>
                             cm
                         </div>
-                        <field name="shopee_logistic_ids">
+                        <field name="shopee_logistic_ids"  required="True">
                             <tree editable="bottom">
                                 <field name="logistic_id"/>
                                 <field name="enable"/>

@@ -547,6 +547,8 @@ class ProductTemplate(models.Model):
             print(url)
             gambar = []
             logistik = []
+            if not rec.shopee_logistic_ids:
+                raise UserError(_('Logistic info should enable at least one'))
             if rec.image_1920:
 
                 gambarid = self.post_upload_image(rec.image_1920, account, rec.id)
@@ -554,8 +556,8 @@ class ProductTemplate(models.Model):
                 print(gambarid)
                 gambar.append(gambarid)
             else:
-
                 raise UserError(_('Please entry image first!'))
+
             if rec.shopee_image_ids:
                 for img in rec.shopee_image_ids:
                     gambarid2 = self.multipost_upload_image(account, img.id)
