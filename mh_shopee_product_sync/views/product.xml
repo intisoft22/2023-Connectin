@@ -21,7 +21,7 @@
                 <xpath expr="//page[@name='inventory']" position="after">
                     <page name='shopee_tab' string="Shopee" attrs="{'invisible':[('is_shopee','!=',True)]}">
                         <group name="generalshopee">
-                            <field name="dateupload_shopee"/>
+                            <field name="dateupload_shopee" readonly="1"/>
                             <field name="shopee_account_id" attrs="{'required':[('is_shopee','=',True)]}"/>
                             <field name="shopee_product_id"/>
                             <field name="shopee_name" attrs="{'required':[('is_shopee','=',True)]}"/>
@@ -68,10 +68,13 @@
                         <field name="shopee_brand_id" domain="shopee_brand_id_domain"/>
                         <field name="shopee_brand_id_domain" invisible="1"/>
                         <field name="shopee_attributes_ids">
-                            <tree delete="false">
+                            <tree delete="false" create="false">
                                 <field name="attribute_id"/>
                                 <field name="is_mandatory"/>
                                 <field name="attribute_value_display"/>
+                                <field name="attribute_value_id" invisible="1"/>
+                                <field name="attribute_value_ids" invisible="1"/>
+                                <field name="attribute_value_str" invisible="1"/>
                             </tree>
                             <form>
                                 <sheet>
@@ -79,7 +82,7 @@
                                         <field name="attribute_id" />
                                         <field name="is_mandatory" readonly="1" force_save="1"/>
                                         <field name="input_type" invisible="1"/>
-                                        <field name="attribute_value_domain" />
+                                        <field name="attribute_value_domain" invisible="1" />
                                         <field name="attribute_value_id" domain="attribute_value_domain"
                                                attrs="{'invisible':[('input_type','not in',['COMBO_BOX','DROP_DOWN'])]}"/>
                                         <field name="attribute_value_ids"
@@ -160,7 +163,7 @@
 
                     <button name="update_variant_shopee_act" string="Update Variant" type="object"
                             attrs="{'invisible':[('changevariant_shopee','!=',True)]}"/>
-                    <button name="reset_variant_shopee" string="Reset Variant" type="object"
+                    <button name="reset_variant_shopee" string="Reset Variant" type="object" attrs="{'invisible':[('countvariant_shopee','=',0)]}"
                             />
                     <group name="variant_product">
                         <field name="shopee_variant_product_ids" attrs="{'readonly':[('needupdate_shopee','=',True)]}">
