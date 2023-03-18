@@ -10,6 +10,7 @@ from odoo import http
 import requests
 from odoo.exceptions import AccessError
 
+from odoo.exceptions import UserError
 
 class MarketplaceAccount(models.Model):
     _inherit = 'marketplace.account'
@@ -38,8 +39,8 @@ class MarketplaceAccount(models.Model):
             return2 = []
             datas = self.env['shopee.product.category']
             if json_loads:
-                if json_loads['error'] == 'error_param':
-                    return2.append(str(json_loads['msg']))
+                if json_loads['error'] != '':
+                    raise UserError(_(str(json_loads['message'])))
                 else:
                     for jload in json_loads['response']['category_list']:
                         # print(jload)
@@ -196,7 +197,7 @@ class MarketplaceAccount(models.Model):
                                     item_list = str(jload['item_id'])
                                 else:
                                     item_list = item_list + ',' + str(jload['item_id'])
-                        self.get_model_product_detail(item_list)
+                        # self.get_model_product_detail(item_list)
                         self.get_product_detail(item_list)
                         if json_loads['response']['total_count'] > (json_loads['response']['next_offset']+10):
                             self.get_product(json_loads['response']['next_offset'])
@@ -730,7 +731,7 @@ class MarketplaceAccount(models.Model):
             datas = self.env['shopee.logistic']
             if json_loads:
                 if json_loads['error'] != '':
-                    return2.append(str(json_loads['message']))
+                    raise UserError(_(str(json_loads['message'])))
                 else:
                     for jload in json_loads['response']['logistics_channel_list']:
                         # print(jload)
@@ -741,6 +742,7 @@ class MarketplaceAccount(models.Model):
                             'desc': jload['logistics_description'],
                             'enable': jload['enabled'],
                             'shopee_logistic_id': jload['logistics_channel_id'],
+                            'mask_channel_id': jload['mask_channel_id'],
                             'fee_type': jload['fee_type'],
                             'cod_enabled': jload['cod_enabled'],
                         }
@@ -761,6 +763,7 @@ class MarketplaceAccount(models.Model):
                     'sticky': True,  # True/False will display for few seconds if false
                 },
             }
+        
     def get_dependencies(self):
         for rec in self:
             self.get_category()

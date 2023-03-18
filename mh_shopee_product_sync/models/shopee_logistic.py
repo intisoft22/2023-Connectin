@@ -21,6 +21,7 @@ class ShopeeLogistic(models.Model):
     desc = fields.Text('Desc',  required=True)
     enable = fields.Boolean('Enable',  required=True)
     cod_enabled = fields.Boolean('COD Enable',  required=True)
+    mask_channel_id = fields.Char('Parent',  required=True)
 
     shopee_logistic_id = fields.Integer('Shopee Logistic ID')
 
@@ -35,7 +36,7 @@ class ShopeeLogisticProduct(models.Model):
     product_tmpl_id = fields.Many2one('product.template', index=True)
     product_id = fields.Many2one('product.product', index=True)
     logistic_id = fields.Many2one('shopee.logistic', index=True, required=True)
-    enable = fields.Boolean('Enable',  required=True)
+    enable = fields.Boolean('Enable',  required=True,default=True)
     free = fields.Boolean('Free',  required=True)
 
     fee = fields.Float('Shipping Fee', index=True,)

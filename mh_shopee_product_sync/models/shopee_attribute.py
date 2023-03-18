@@ -27,6 +27,8 @@ class ProductAttributeValue(models.Model):
     value_unit = fields.Char('Value Unit')
     parent_attribute_list = fields.One2many('shopee.product.attribute.value.parent', 'attribute_value_id', string="Parent Attribute ID")
     attribute_id = fields.Many2one('shopee.product.attribute', string='Attribute ID')
+    product_category_ids = fields.Many2many('shopee.product.category', 'attribute_value_product_category_rel',
+                                       'product_category_id', 'value_id', string='Product Category',  )
 
 
 class ProductAttribute(models.Model):
@@ -51,19 +53,28 @@ class ShopeeProductAttributeProduct(models.Model):
     _name = "shopee.product.attribute.product"
     _description = "Shopee Product Attribute in Product"
 
-    product_tmpl_id = fields.Many2one('product.template', index=True, required=True)
+    product_tmpl_id = fields.Many2one('product.template',  required=True)
     product_id = fields.Many2one('product.product', index=True)
-    attribute_id = fields.Many2one('shopee.product.attribute', index=True, required=True)
+    attribute_id = fields.Many2one('shopee.product.attribute',  required=True)
     is_mandatory = fields.Boolean('Mandatory')
     input_type = fields.Char('Input Type')
-    attribute_value_id = fields.Many2one('shopee.product.attribute.value','Value', index=True, )
-    attribute_value_ids = fields.Many2many('shopee.product.attribute.value','attribute_value_product_rel','attribute_product_id','value_id',string='Value', index=True, )
+    attribute_value_id = fields.Many2one('shopee.product.attribute.value',string='Value',)
+    attribute_value_ids = fields.Many2many('shopee.product.attribute.value','attribute_value_product_rel','attribute_product_id','value_id',string='Value',  )
     attribute_value_str = fields.Char('Value')
     attribute_value_display = fields.Char('Value',compute='_compute_display_value',store=True)
+
+    attribute_value_domain = fields.Char(
+        default="[]"
+    )
+
+    @api.onchange('attribute_value_id')
+    def _compute_attribute_value_id(self):
+        print(self.attribute_value_id.name)
 
     @api.depends('attribute_value_id','attribute_value_ids','attribute_value_str')
     def _compute_display_value(self):
         print("Tesss============")
+        print(self.attribute_value_id.name)
         for at in self:
             if at.attribute_value_id:
                 at.attribute_value_display=at.attribute_value_id.name

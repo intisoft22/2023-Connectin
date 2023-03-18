@@ -127,10 +127,10 @@ class StockMove(models.Model):
                                 else:
                                     print(json_loads['response'])
                                     for jload in json_loads['response']['failure_list']:
-                                        print(jloads['model_id'])
-                                        messgs = jloads['failed_reason']
+                                        # print(jload['model_id'])
+                                        messgs = jload['failed_reason']
                                     for jload in json_loads['response']['success_list']:
-                                        print(json_loads)
+                                        # print(json_loads)
                                         messgs = 'success'
         res = super(StockMove, self).write(vals)
         return res
