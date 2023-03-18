@@ -24,6 +24,7 @@
                             <h1><field name="name" placeholder="e.g. Lamps"/></h1>
                         </div>
                         <group name="first" col="2">
+                            <field name="mask_channel_id" />
                             <field name="enable" />
                             <field name="desc" class="oe_inline"/>
                         </group>
