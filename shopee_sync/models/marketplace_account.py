@@ -10,6 +10,11 @@ from odoo import http
 import requests
 from odoo.exceptions import AccessError
 
+import requests
+import logging
+import base64
+_logger = logging.getLogger(__name__)
+import os.path
 from odoo.exceptions import UserError
 
 class MarketplaceAccount(models.Model):
@@ -300,33 +305,53 @@ class MarketplaceAccount(models.Model):
             sequence = 100
             datas = self.env['product.template']
             if json_loads:
-                if json_loads['error'] == 'error_param':
-                    return2.append(str(json_loads['msg']))
+                if json_loads['error'] != '':
+                    raise UserError(_(str(json_loads['message'])))
                 else:
                     for jload in json_loads['response']['item_list']:
                         sequence += 1
                         data_ready = datas.search([('shopee_product_id', '=', jload['item_id'])])
                         category_id = False
+                        shopee_category_id = False
+                        shopee_category_ids = False
                         # if 'category_id' in jload:
                         #     # category_id = self.env['product.category'].search(
                         #     category_id = self.env['shopee.product.category'].search(
                         #         [('shopee_category_id', '=', jload['category_id'])]).id
                         if category_id is False:
                             category_id = self.env['product.category'].search([('name', '=', 'All')])
+                        if jload['category_id']:
+                            shopee_category_ids = self.env['shopee.product.category'].search([('shopee_category_id', '=', jload['category_id'])])
+                            shopee_category_id = shopee_category_ids.id
                         stock = 2000
                         if 'stock_info_v2' in jload:
                             # print(jload['stock_info_v2'])
                             for sstock in jload['stock_info_v2']['seller_stock']:
                                 stock = sstock['stock']
                                 # print(stock)
+                        price=0
+                        if 'price_info'in jload:
+                            price=jload['price_info'][0]['original_price']
+
+
                         vals_product = {
                             'shopee_product_id': jload['item_id'],
                             'categ_id': category_id.id,
                             'name': jload['item_name'],
                             'shopee_name': jload['item_name'],
+                            'shopee_desc': jload['description'],
+                            'shopee_category_id': shopee_category_id,
+                            'shopee_account_id': rec.id,
+                            'shopee_condition': jload['condition'],
+                            'shopee_price': price,
                             'weight': jload['weight'],
                             'shopee_product_status': jload['item_status'],
                             'shopee_item_status': jload['item_status'],
+                            'shopee_weight': jload['weight'],
+                            'shopee_length': jload['dimension']['package_length'],
+                            'shopee_width': jload['dimension']['package_width'],
+                            'shopee_height': jload['dimension']['package_height'],
+                            'shopee_sku': jload['item_sku'],
                             'shopee_stock': str(stock),
                             'sequence': sequence,
                             'type': 'product',
@@ -335,18 +360,62 @@ class MarketplaceAccount(models.Model):
                             vals_product = {
                                 'shopee_product_id': jload['item_id'],
                                 'shopee_name': jload['item_name'],
+                                'shopee_desc': jload['description'],
+                                'shopee_category_id': shopee_category_id,
+                                'shopee_account_id':  rec.id,
+                                'shopee_condition':  jload['condition'],
+                                'shopee_price':  price,
                                 'weight': jload['weight'],
                                 'shopee_product_status': jload['item_status'],
                                 'shopee_item_status': jload['item_status'],
+                                'shopee_weight': jload['weight'],
+                                'shopee_length': jload['dimension']['package_length'],
+                                'shopee_width': jload['dimension']['package_width'],
+                                'shopee_height': jload['dimension']['package_height'],
+                                'shopee_sku': jload['item_sku'],
                                 'shopee_stock': str(stock),
                             }
                             print('update')
                             print(vals_product)
                             data_ready.write(vals_product)
+                            idproduct=data_ready
                         else:
                             print('create')
                             print(vals_product)
-                            datas.create(vals_product)
+                            idproduct=datas.create(vals_product)
+                        if shopee_category_ids:
+                            idproduct.get_attribute(shopee_category_ids)
+                            if 'attribute_list' in jload:
+                                idproduct.set_attribute_product(jload['attribute_list'])
+
+                            if 'logistic_info' in jload:
+                                idproduct.shopee_logistic_ids =False
+                                idproduct.set_logistic_product(jload['logistic_info'])
+                            if 'has_model' in jload:
+                                idproduct.set_tier_variant_product()
+                            if 'image' in jload:
+                                no=1
+                                imagearray = []
+
+                                idproduct.shopee_image_ids =False
+                                for x in jload['image']['image_url_list']:
+                                    if no ==1:
+                                        data = base64.b64encode(requests.get(x.strip()).content).replace(b"\n", b"")
+
+                                        idproduct.image_1920=data
+                                        no+=1
+                                    else:
+                                        data = base64.b64encode(requests.get(x.strip()).content).replace(b"\n", b"")
+
+                                        vals_image_product = {
+                                            'image_1920': data,
+
+                                        }
+                                        imagearray.append((0, 0, vals_image_product))
+
+
+                                idproduct.shopee_image_ids =imagearray
+
 
     def post_upload_image(self):
         for rec in self:
