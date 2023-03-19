@@ -52,7 +52,7 @@ class ProductTemplate(models.Model):
     is_shopee = fields.Boolean('Shopee')
     variant_ok = fields.Boolean('Variant')
     shopee_name = fields.Char('Shopee Name')
-    shopee_desc = fields.Char('Shopee Description')
+    shopee_desc = fields.Text('Shopee Description')
     shopee_product_id = fields.Char('Shopee Product ID', readonly=1)
     shopee_category_id = fields.Many2one('shopee.product.category', 'Shopee Category',
                                          domain="[('has_children','=',False)]")
@@ -547,6 +547,8 @@ class ProductTemplate(models.Model):
             print(url)
             gambar = []
             logistik = []
+            if not rec.shopee_logistic_ids:
+                raise UserError(_('Logistic info should enable at least one'))
             if rec.image_1920:
 
                 gambarid = self.post_upload_image(rec.image_1920, account, rec.id)
@@ -554,8 +556,8 @@ class ProductTemplate(models.Model):
                 print(gambarid)
                 gambar.append(gambarid)
             else:
-
                 raise UserError(_('Please entry image first!'))
+
             if rec.shopee_image_ids:
                 for img in rec.shopee_image_ids:
                     gambarid2 = self.multipost_upload_image(account, img.id)
@@ -648,8 +650,11 @@ class ProductTemplate(models.Model):
                     if json_loads['response']:
                         if json_loads['response']['item_id']:
                             rec.shopee_product_id = json_loads['response']['item_id']
-                            if rec.shopee_variant_product_detail_ids:
-                                self.add_model_product()
+                            if rec.shopee_product_id:
+                                if rec.shopee_variant_product_detail_ids:
+                                    self.add_model_product()
+
+                                    rec.needupdate_shopee = False
 
             return {
                 'type': 'ir.actions.client',
@@ -1048,6 +1053,7 @@ class ProductTemplate(models.Model):
                                     'display_value_name': jloadattribute['display_value_name'],
                                     'value_id': jloadattribute['value_id'],
                                     'attribute_id': attributeid.id,
+                                    'product_category_ids': [(4, shopee_categ_id.id)],
 
                                 }
                                 if 'value_unit' in jloadattribute:
@@ -1106,61 +1112,64 @@ class ProductTemplate(models.Model):
             idprod = rec._origin.id
             print(idprod)
 
-        if not self.shopee_category_id:
-            self.shopee_attributes_ids = False
-        else:
-            self.get_attribute(self.shopee_category_id)
-            self.shopee_attributes_ids = False
-            timest = int(time.time())
+        for rec in self:
+            if not rec.shopee_category_id:
+                rec.shopee_attributes_ids = False
+            else:
+                self.get_attribute(rec.shopee_category_id)
+                rec.shopee_attributes_ids = False
+                timest = int(time.time())
 
-            # account=self.account
-            account = self.shopee_account_id
-            host = account.url_api
-            path = "/api/v2/product/get_attributes"
-            host = account.url_api
-            partner_id = account.partner_id_shopee
-            shop_id = account.shop_id_shopee
-            access_token = account.access_token_shopee
-            tmp = account.partner_key_shopee
-            partner_key = tmp.encode()
-            tmp_base_string = "%s%s%s%s%s" % (partner_id, path, timest, access_token, shop_id)
-            base_string = tmp_base_string.encode()
-            sign = hmac.new(partner_key, base_string, hashlib.sha256).hexdigest()
-            datapage = 100
-            url = host + path + "?access_token=%s&category_id=%s&language=id&partner_id=%s&shop_id=%s&timestamp=%s&sign=%s" % (
-                access_token, self.shopee_category_id.shopee_category_id, partner_id, shop_id, timest, sign)
-            print(url)
-            payload = json.dumps({})
-            headers = {'Content-Type': 'application/json'}
-            response = requests.request("GET", url, headers=headers, data=payload, allow_redirects=False)
-            print(response.text)
-            json_loads = json.loads(response.text)
-            return2 = []
-            datas = self.env['shopee.product.attribute']
-            datas2 = self.env['shopee.product.attribute.product']
-            if json_loads:
-                if json_loads['error'] != '':
-                    raise UserError(_(str(json_loads['message'])))
-                else:
-                    if json_loads['response']:
-                        for jload in json_loads['response']['attribute_list']:
+                # account=self.account
+                account = rec.shopee_account_id
+                host = account.url_api
+                path = "/api/v2/product/get_attributes"
+                host = account.url_api
+                partner_id = account.partner_id_shopee
+                shop_id = account.shop_id_shopee
+                access_token = account.access_token_shopee
+                tmp = account.partner_key_shopee
+                partner_key = tmp.encode()
+                tmp_base_string = "%s%s%s%s%s" % (partner_id, path, timest, access_token, shop_id)
+                base_string = tmp_base_string.encode()
+                sign = hmac.new(partner_key, base_string, hashlib.sha256).hexdigest()
+                datapage = 100
+                url = host + path + "?access_token=%s&category_id=%s&language=id&partner_id=%s&shop_id=%s&timestamp=%s&sign=%s" % (
+                    access_token, rec.shopee_category_id.shopee_category_id, partner_id, shop_id, timest, sign)
+                print(url)
+                payload = json.dumps({})
+                headers = {'Content-Type': 'application/json'}
+                response = requests.request("GET", url, headers=headers, data=payload, allow_redirects=False)
+                print(response.text)
+                json_loads = json.loads(response.text)
+                return2 = []
+                datas = self.env['shopee.product.attribute']
+                datas2 = self.env['shopee.product.attribute.product']
+                if json_loads:
+                    if json_loads['error'] != '':
+                        raise UserError(_(str(json_loads['message'])))
+                    else:
+                        if json_loads['response']:
+                            for jload in json_loads['response']['attribute_list']:
 
-                            nocreate = False
-                            for jloadattribute in jload['attribute_value_list']:
+                                nocreate = False
+                                for jloadattribute in jload['attribute_value_list']:
 
-                                if 'parent_attribute_list' in jloadattribute:
-                                    nocreate = True
-                            attributearray = []
-                            if not nocreate:
-                                data_ready = datas.search([('attribute_id', '=', jload['attribute_id'])])
-                                vals_product_attribute = {
-                                    'attribute_id': data_ready[0].id,
-                                    'is_mandatory': jload['is_mandatory'],
-                                    'input_type': jload['input_type'],
-                                }
-                                print(vals_product_attribute)
-                                attributearray.append((0, 0, vals_product_attribute))
-                            self.shopee_attributes_ids = attributearray
+                                    if 'parent_attribute_list' in jloadattribute:
+                                        nocreate = True
+                                attributearray = []
+                                if not nocreate:
+
+                                    data_ready = datas.search([('attribute_id', '=', jload['attribute_id'])])
+                                    vals_product_attribute = {
+                                        'attribute_id': data_ready[0].id,
+                                        'is_mandatory': jload['is_mandatory'],
+                                        'input_type': jload['input_type'],
+                                        'attribute_value_domain': json.dumps( [('attribute_id', '=', data_ready[0].id),('product_category_ids', '=', rec.shopee_category_id.id)])
+                                    }
+                                    print(vals_product_attribute)
+                                    attributearray.append((0, 0, vals_product_attribute))
+                                rec.shopee_attributes_ids = attributearray
 
 
 class ShopeeImageProduct(models.Model):

@@ -45,6 +45,7 @@
                                     <field name="name"/>
                                     <field name="value_id"/>
                                     <field name="value_unit"/>
+                                    <field name="product_category_ids" widget="many2many_tags"/>
                                 </group>
                                 <field name="parent_attribute_list">
                                     <tree>

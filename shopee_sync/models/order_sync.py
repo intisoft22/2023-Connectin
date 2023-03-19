@@ -122,6 +122,24 @@ class StockMove(models.Model):
                             #         for jload in json_loads['response']['success_list']:
                             #             print(json_loads)
                             #             messgs = 'success'
+                            response = requests.request("POST", url, headers=headers, data=payload, allow_redirects=False)
+                            print(payload)
+                            # print(response.text)
+                            json_loads = json.loads(response.text)
+                            return2 = []
+                            messgs = '-'
+                            if json_loads:
+                                if json_loads['error'] == 'error_param':
+                                    return2.append(str(json_loads['msg']))
+                                else:
+                                    print(json_loads['response'])
+                                    for jload in json_loads['response']['failure_list']:
+                                        # print(jload['model_id'])
+                                        messgs = jload['failed_reason']
+                                    for jload in json_loads['response']['success_list']:
+                                        # print(json_loads)
+                                        messgs = 'success'
+>>>>>>> 3a3d51c091a4068b90ceb2451db48f8e0a8dc083
         res = super(StockMove, self).write(vals)
         return res
 

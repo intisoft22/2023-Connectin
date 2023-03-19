@@ -8,6 +8,10 @@
             <field name="model">product.template</field>
             <field name="inherit_id" ref="product.product_template_form_view"/>
             <field name="arch" type="xml">
+                <field name="image_1920" position="replace">
+
+                    <field name="image_1920" widget="image" class="oe_avatar" required="True" options="{'preview_image': 'image_128'}"/>
+                </field>
                 <xpath expr="//div[@name='options']" position="inside">
                     <div>
                         <field name="is_shopee"/>
@@ -17,12 +21,12 @@
                 <xpath expr="//page[@name='inventory']" position="after">
                     <page name='shopee_tab' string="Shopee" attrs="{'invisible':[('is_shopee','!=',True)]}">
                         <group name="generalshopee">
-                            <field name="dateupload_shopee"/>
+                            <field name="dateupload_shopee" readonly="1"/>
                             <field name="shopee_account_id" attrs="{'required':[('is_shopee','=',True)]}"/>
                             <field name="shopee_product_id"/>
                             <field name="shopee_name" attrs="{'required':[('is_shopee','=',True)]}"/>
                             <field name="shopee_category_id" attrs="{'required':[('is_shopee','=',True)]}"/>
-                            <field name="shopee_desc" attrs="{'required':[('is_shopee','=',True)]}"/>
+                            <field name="shopee_desc" attrs="{'required':[('is_shopee','=',True)]}" />
                             <field name="shopee_item_status" attrs="{'required':[('is_shopee','=',True)]}"/>
 
                         </group>
@@ -64,21 +68,25 @@
                         <field name="shopee_brand_id" domain="shopee_brand_id_domain"/>
                         <field name="shopee_brand_id_domain" invisible="1"/>
                         <field name="shopee_attributes_ids">
-                            <tree create="false" delete="false">
+                            <tree delete="false" create="false">
                                 <field name="attribute_id"/>
                                 <field name="is_mandatory"/>
                                 <field name="attribute_value_display"/>
+                                <field name="attribute_value_id" invisible="1"/>
+                                <field name="attribute_value_ids" invisible="1"/>
+                                <field name="attribute_value_str" invisible="1"/>
                             </tree>
                             <form>
                                 <sheet>
                                     <group>
-                                        <field name="attribute_id" readonly="1" force_save="1"/>
+                                        <field name="attribute_id" />
                                         <field name="is_mandatory" readonly="1" force_save="1"/>
                                         <field name="input_type" invisible="1"/>
-                                        <field name="attribute_value_id" domain="[('attribute_id','=',attribute_id)]"
+                                        <field name="attribute_value_domain" invisible="1" />
+                                        <field name="attribute_value_id" domain="attribute_value_domain"
                                                attrs="{'invisible':[('input_type','not in',['COMBO_BOX','DROP_DOWN'])]}"/>
                                         <field name="attribute_value_ids"
-                                               domain="[('attribute_id','=',attribute_id)]" widget="many2many_tags"
+                                               domain="attribute_value_domain" widget="many2many_tags"
                                                attrs="{'invisible':[('input_type','not in',['MULTIPLE_SELECT','MULTIPLE_SELECT_COMBO_BOX'])]}"/>
                                         <field name="attribute_value_str"
                                                attrs="{'invisible':[('input_type','!=','TEXT_FILED')]}"/>
@@ -114,12 +122,12 @@
                                    attrs="{'required':[('is_shopee','=',True)]}"/>
                             cm
                         </div>
-                        <field name="shopee_logistic_ids">
+                        <field name="shopee_logistic_ids"  required="True">
                             <tree editable="bottom">
-                                <field name="logistic_id"/>
-                                <field name="enable"/>
-                                <field name="free"/>
-                                <field name="est_fee"/>
+                                <field name="logistic_id" domain="[('enable','=',True),('mask_channel_id','=',0)]"/>
+                                <field name="enable" invisible="1"/>
+                                <field name="free" invisible="1"/>
+                                <field name="est_fee" invisible="1"/>
                             </tree>
                         </field>
                     </group>
@@ -155,10 +163,10 @@
 
                     <button name="update_variant_shopee_act" string="Update Variant" type="object"
                             attrs="{'invisible':[('changevariant_shopee','!=',True)]}"/>
-                    <button name="reset_variant_shopee" string="Reset Variant" type="object"
+                    <button name="reset_variant_shopee" string="Reset Variant" type="object" attrs="{'invisible':[('countvariant_shopee','=',0)]}"
                             />
                     <group name="variant_product">
-                        <field name="shopee_variant_product_ids">
+                        <field name="shopee_variant_product_ids" attrs="{'readonly':[('needupdate_shopee','=',True)]}">
                             <tree create="false" delete="false">
                                 <field name="attribute_id2"/>
                                 <field name="value_ids2" widget="many2many_tags"/>
@@ -192,7 +200,7 @@
                             </form>
                         </field>
                         <field name="shopee_variant_product_detail_ids">
-                            <tree editable="bottom" create="false" default_order="tier_tobe asc">
+                            <tree editable="bottom" create="false" delete="false" default_order="tier_tobe asc">
                                 <field name="tier_tobe"/>
                                 <field name="tier" />
                                 <field name="product_id"/>
