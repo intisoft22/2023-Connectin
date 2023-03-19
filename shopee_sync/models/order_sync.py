@@ -49,6 +49,7 @@ class SaleOrderLine(models.Model):
 class SaleOrder(models.Model):
     _inherit = 'sale.order'
 
+    shopee_invoiced_price = fields.Float('Invoiced Price')
     shopee_buyer_username = fields.Char('Buyer Username')
     shopee_buyer_id = fields.Char('Buyer ID')
     shopee_recipient_address = fields.Text('Recipient Address')
@@ -94,17 +95,6 @@ class StockMove(models.Model):
                             url = host + path + "?access_token=%s&partner_id=%s&shop_id=%s&timestamp=%s&sign=%s" % (
                                 access_token, partner_id, shop_id, timest, sign)
                             print(url)
-
-                            # payload = json.dumps({
-                            #     "item_id": product.shopee_product_id,
-                            #     "stock_list": [
-                            #         {   "model_id": 0,
-                            #             "seller_stock": [
-                            #                 {   "location_id": "-",
-                            #                     "stock": 0
-                            #                 }
-                            #             ]
-                            #         }]})
                             payload = json.dumps({
                                 "item_id": int(product.shopee_product_id),
                                 "stock_list": [
@@ -115,23 +105,23 @@ class StockMove(models.Model):
                                         ]
                                         }]})
                             headers = {'Content-Type': 'application/json'}
-                            response = requests.request("POST", url, headers=headers, data=payload, allow_redirects=False)
-                            print(payload)
-                            # print(response.text)
-                            json_loads = json.loads(response.text)
-                            return2 = []
-                            messgs = '-'
-                            if json_loads:
-                                if json_loads['error'] == 'error_param':
-                                    return2.append(str(json_loads['msg']))
-                                else:
-                                    print(json_loads['response'])
-                                    for jload in json_loads['response']['failure_list']:
-                                        print(jloads['model_id'])
-                                        messgs = jloads['failed_reason']
-                                    for jload in json_loads['response']['success_list']:
-                                        print(json_loads)
-                                        messgs = 'success'
+                            # response = requests.request("POST", url, headers=headers, data=payload, allow_redirects=False)
+                            # print(payload)
+                            # # print(response.text)
+                            # json_loads = json.loads(response.text)
+                            # return2 = []
+                            # messgs = '-'
+                            # if json_loads:
+                            #     if json_loads['error'] == 'error_param':
+                            #         return2.append(str(json_loads['msg']))
+                            #     else:
+                            #         print(json_loads['response'])
+                            #         for jload in json_loads['response']['failure_list']:
+                            #             print(jloads['model_id'])
+                            #             messgs = jloads['failed_reason']
+                            #         for jload in json_loads['response']['success_list']:
+                            #             print(json_loads)
+                            #             messgs = 'success'
         res = super(StockMove, self).write(vals)
         return res
 

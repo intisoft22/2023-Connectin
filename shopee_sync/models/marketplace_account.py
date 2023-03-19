@@ -16,6 +16,7 @@ class MarketplaceAccount(models.Model):
 
     def get_category(self):
         for rec in self:
+            self.get_token()
             timest = int(time.time())
             host = rec.url_api
             path = "/api/v2/product/get_category"
@@ -88,6 +89,7 @@ class MarketplaceAccount(models.Model):
     def get_brand(self, categ_id, shopee_categ_id,offset):
         for rec in self:
             print(categ_id)
+            self.get_token()
             timest = int(time.time())
             host = rec.url_api
             path = "/api/v2/product/get_brand_list"
@@ -147,6 +149,7 @@ class MarketplaceAccount(models.Model):
 
     def get_product(self, offset=0):
         for rec in self:
+            self.get_token()
             timest = int(time.time())
             host = rec.url_api
             # path = "api/v2/logistics/get_channel_list"
@@ -196,7 +199,7 @@ class MarketplaceAccount(models.Model):
                                     item_list = str(jload['item_id'])
                                 else:
                                     item_list = item_list + ',' + str(jload['item_id'])
-                        self.get_model_product_detail(item_list)
+                                # self.get_model_product_detail(jload['item_id'])
                         self.get_product_detail(item_list)
                         if json_loads['response']['total_count'] > (json_loads['response']['next_offset']+10):
                             self.get_product(json_loads['response']['next_offset'])
@@ -218,7 +221,7 @@ class MarketplaceAccount(models.Model):
             base_string = tmp_base_string.encode()
             sign = hmac.new(partner_key, base_string, hashlib.sha256).hexdigest()
 
-            url = host + path + "?item_id_list=%s&access_token=%s&partner_id=%s&shop_id=%s&timestamp=%s&sign=%s&need_complaint_policy=true&need_tax_info=true" % (
+            url = host + path + "?item_id=%s&access_token=%s&partner_id=%s&shop_id=%s&timestamp=%s&sign=%s&need_complaint_policy=true&need_tax_info=true" % (
             item_list, access_token, partner_id, shop_id, timest, sign)
             print(url)
             payload = json.dumps({
@@ -239,7 +242,7 @@ class MarketplaceAccount(models.Model):
                 if json_loads['error'] == 'error_param':
                     return2.append(str(json_loads['msg']))
                 else:
-                    for jload in json_loads['response']['item_list']:
+                    for jload in json_loads['response']['model']:
                         sequence += 1
                         data_ready = datas.search([('shopee_product_id', '=', jload['item_id'])])
                         category_id = False
@@ -267,6 +270,7 @@ class MarketplaceAccount(models.Model):
                         else:
                             print('create')
                             datas.create(vals_product)
+
     def get_product_detail(self, item_list):
         for rec in self:
             timest = int(time.time())
@@ -349,6 +353,7 @@ class MarketplaceAccount(models.Model):
 
     def post_upload_image(self):
         for rec in self:
+            self.get_token()
             timest = int(time.time())
             host = rec.url_api
             path = "/api/v2/media_space/upload_image"
@@ -432,6 +437,7 @@ class MarketplaceAccount(models.Model):
 
     def get_order(self):
         for rec in self:
+            self.get_token()
             timest = int(time.time())
             host = rec.url_api
             path = "/api/v2/order/get_order_list"
@@ -467,6 +473,7 @@ class MarketplaceAccount(models.Model):
 
     def get_order_time(self, start_date, end_date):
         for rec in self:
+            self.get_token()
             timest = int(time.time())
             host = rec.url_api
             path = "/api/v2/order/get_order_list"
@@ -560,6 +567,8 @@ class MarketplaceAccount(models.Model):
                         vals_order = {
                             'partner_id': partner.id,
                             'client_order_ref': jload['order_sn'],
+                            'date_order': datetime.fromtimestamp(int(jload['create_time'])).strftime('%Y-%m-%d %H:%M:%S'),
+                            # 'date_order': datetime.fromtimestamp(int(jload['create_time'])),
                             'note': jload['note'],
                             'shopee_recipient_address': recipient,
                             'shopee_buyer_username' : jload['buyer_username'],
@@ -605,6 +614,8 @@ class MarketplaceAccount(models.Model):
                                 data_ready.action_confirm()
                             else:
                                 vals_order = {
+                                    'date_order': datetime.fromtimestamp(int(jload['create_time'])).strftime(
+                                        '%Y-%m-%d %H:%M:%S'),
                                     'note': jload['note'],
                                     'shopee_recipient_address': recipient,
                                     'shopee_buyer_username': jload['buyer_username'],
@@ -625,34 +636,34 @@ class MarketplaceAccount(models.Model):
                                                 move.write({'quantity_done':0})
                                             picking_ready.action_toggle_is_locked()
                             so_id = data_ready
-                        else:
-                            if jload['order_status'] != 'CANCELLED':
-                                created = datas.create(vals_order)
-                                for prod in jload['item_list']:
-                                    note = ''
-                                    product_ready = self.env['product.product'].search([('shopee_product_id', '=', prod['item_id'])], limit=1)
-                                    if product_ready:
-                                        item_ready = False
-                                        vals_item = {
-                                            'product_id': product_ready.id,
-                                            'name': product_ready.name + ' (model: '+ str(prod['model_name']) + ')',
-                                            'product_uom_qty': prod['model_quantity_purchased'],
-                                            'price_unit': prod['model_original_price'],
-                                            'shopee_model_original_price': prod['model_original_price'],
-                                            'shopee_model_discounted_price': prod['model_discounted_price'],
-                                            'order_id': created.id
-                                        }
-                                        for line in data_ready.order_line:
-                                            if line.product_id.shopee_product_id == str(prod['item_id']):
-                                                wr = line.write(vals_item)
-                                                item_ready = True
-                                        if not item_ready:
-                                            create_line = self.env['sale.order.line'].create(vals_item)
-                                    else:
-                                        note += 'Produk (' + str(prod['item_id']) + ' : ' + str(prod['item_name']) + ') sudah dihapus atau belum tersinkronisasi. /n'
-                                        updated = created.write({'note': note})
-                                created.action_confirm()
-                                so_id = created
+                        # else:
+                            # if jload['order_status'] != 'CANCELLED':
+                            #     created = datas.create(vals_order)
+                            #     for prod in jload['item_list']:
+                            #         note = ''
+                            #         product_ready = self.env['product.product'].search([('shopee_product_id', '=', prod['item_id'])], limit=1)
+                            #         if product_ready:
+                            #             item_ready = False
+                            #             vals_item = {
+                            #                 'product_id': product_ready.id,
+                            #                 'name': product_ready.name + ' (model: '+ str(prod['model_name']) + ')',
+                            #                 'product_uom_qty': prod['model_quantity_purchased'],
+                            #                 'price_unit': prod['model_original_price'],
+                            #                 'shopee_model_original_price': prod['model_original_price'],
+                            #                 'shopee_model_discounted_price': prod['model_discounted_price'],
+                            #                 'order_id': created.id
+                            #             }
+                            #             for line in data_ready.order_line:
+                            #                 if line.product_id.shopee_product_id == str(prod['item_id']):
+                            #                     wr = line.write(vals_item)
+                            #                     item_ready = True
+                            #             if not item_ready:
+                            #                 create_line = self.env['sale.order.line'].create(vals_item)
+                            #         else:
+                            #             note += 'Produk (' + str(prod['item_id']) + ' : ' + str(prod['item_name']) + ') sudah dihapus atau belum tersinkronisasi. /n'
+                            #             updated = created.write({'note': note})
+                            #     created.action_confirm()
+                            #     so_id = created
                         if so_id:
                             if so_id.order_line:
                                 for pack in jload['package_list']:
@@ -666,17 +677,17 @@ class MarketplaceAccount(models.Model):
                                     pack_ready = package.search([('package_number', '=', pack['package_number'])])
                                     if pack_ready:
                                         pack_ready.write(vals_pack)
-                                        for pitem in pack['item_list']:
-                                            pitem_ready = self.env['product.product'].search(
-                                                [('shopee_product_id', '=', str(pitem['item_id']))], limit=1)
-                                            if pitem_ready:
-                                                vals_pack_item = {
-                                                    'product_id': pitem_ready.id,
-                                                    'model_id': pitem['model_id'],
-                                                    'quantity': pitem['model_quantity'],
-                                                    'pack_id': pack_ready.id
-                                                }
-                                                pack_ready = self.env['shopee.packege.list.detail'].create(vals_pack_item)
+                                        # for pitem in pack['item_list']:
+                                        #     pitem_ready = self.env['product.product'].search(
+                                        #         [('shopee_product_id', '=', str(pitem['item_id']))], limit=1)
+                                        #     if pitem_ready:
+                                        #         vals_pack_item = {
+                                        #             'product_id': pitem_ready.id,
+                                        #             'model_id': pitem['model_id'],
+                                        #             'quantity': pitem['model_quantity'],
+                                        #             'pack_id': pack_ready.id
+                                        #         }
+                                        #         pack_ready = self.env['shopee.packege.list.detail'].create(vals_pack_item)
 
                                     else:
                                         pack_ready = package.create(vals_pack)
@@ -699,14 +710,16 @@ class MarketplaceAccount(models.Model):
                                     payment.create_invoices()
                                     invoice_ready = invoice.search([('ref', '=', so_id.client_order_ref)])
                                 print(invoice_ready)
-                                for inv in invoice_ready:
-                                    print(inv)
-                                    if inv.state == 'draft':
-                                        if status in {'READY_TO_SHIP','PROCESSED','SHIPPED','COMPLETED'}:
-                                            inv.action_post()
+                                # for inv in invoice_ready:
+                                #     print(inv)
+                                #     if inv.state == 'draft':
+								#
+                                #         if status in {'READY_TO_SHIP','PROCESSED','SHIPPED','COMPLETED'}:
+                                #             inv.action_post()
 
     def get_logistic(self):
         for rec in self:
+            self.get_token()
             timest = int(time.time())
             host = rec.url_api
             path = "/api/v2/logistics/get_channel_list"
@@ -787,6 +800,7 @@ class MarketplaceAccount(models.Model):
             url_address = con1.value
         forca_token = conf_obj.search([('key', '=', 'shopee.default.token')])
         for rec in self:
+            self.get_token()
             timest = int(time.time())
             host = rec.url_api
             path = "/api/v2/product/add_item"
@@ -830,3 +844,131 @@ class MarketplaceAccount(models.Model):
                                 updated = datas.write(vals_product)
                             else:
                                 created = datas.create(vals_product)
+
+
+    def get_all_escrow(self):
+        self.get_token()
+        order_ready = self.env['sale.order'].search([('shopee_order_status', '!=', False)])
+        for order in order_ready:
+            self.get_escrow_detail(order=order)
+
+    def get_escrow_detail(self, order=False):
+        for rec in self:
+            if order:
+                timest = int(time.time())
+                host = rec.url_api
+                path = "/api/v2/payment/get_escrow_detail"
+                partner_id = rec.partner_id_shopee
+                shop_id = rec.shop_id_shopee
+                access_token = rec.access_token_shopee
+                tmp = rec.partner_key_shopee
+                partner_key = tmp.encode()
+                tmp_base_string = "%s%s%s%s%s" % (partner_id, path, timest, access_token, shop_id)
+                base_string = tmp_base_string.encode()
+                sign = hmac.new(partner_key, base_string, hashlib.sha256).hexdigest()
+                time_from = str(int(datetime.timestamp(datetime.now()-timedelta(days=15))))
+                time_to = str(int(datetime.timestamp(datetime.now())))
+                url = host + path + "?access_token=%s&partner_id=%s&shop_id=%s&timestamp=%s&sign=%s&order_sn=%s" % (
+                access_token, partner_id, shop_id, timest, sign, order.client_order_ref)
+                print(url)
+                payload = json.dumps({})
+                headers = {'Content-Type': 'application/json'}
+                response = requests.request("GET", url, headers=headers, data=payload, allow_redirects=False)
+                print(response.text)
+                json_loads = json.loads(response.text)
+                datas = self.env['account.move']
+                if json_loads:
+                    if json_loads['error'] == 'error_param':
+                        return2.append(str(json_loads['message']))
+                    elif json_loads['error'] == 'order_not_found':
+                        print('order not foud')
+                    else:
+                        print(json_loads['response']['order_sn'])
+                        # print(json_loads['response']['order_income'])
+                        print(json_loads['response']['order_income']['escrow_amount'])
+                        escrow_amount = json_loads['response']['order_income']['escrow_amount']
+                        vals_invoiced = {
+                            'shopee_invoiced_price': escrow_amount
+                        }
+                        order.write(vals_invoiced)
+                        picking_ready = self.env['stock.picking'].search([('origin', '=', order.name)])
+                        if picking_ready:
+                            if picking_ready.state == 'done':
+                                invoice_ready = datas.search([('ref', '=', order.client_order_ref)])
+                                if not invoice_ready and order.partner_id and order.partner_id.property_account_receivable_id:
+                                    context = {
+                                        'active_model': 'sale.order',
+                                        'active_ids': [order.id],
+                                        'active_id': order.id,
+                                    }
+                                    payment = self.env['sale.advance.payment.inv'].with_context(context).create(
+                                        {'advance_payment_method': 'delivered'})
+                                    payment.create_invoices()
+                                    invoice_ready = datas.search([('ref', '=', order.client_order_ref)])
+                                account_ready = self.env['account.account'].search([('code', '=', '1-111001')])
+                                print(invoice_ready)
+                                for inv in invoice_ready:
+                                    print(inv)
+                                    if inv.state == 'draft':
+                                        if order.shopee_order_status in {'READY_TO_SHIP', 'PROCESSED', 'SHIPPED', 'COMPLETED'}:
+                                            inv.action_post()
+                                    if (inv.state == 'posted') and (inv.payment_state != 'paid'):
+                                        payment = self.env['account.payment.register'].with_context(active_model='account.move',
+                                                                                                    active_ids=[invoice_ready.id]).create(
+                                            {
+                                                'amount': escrow_amount,
+                                                'payment_date': '2017-01-01',
+                                                'payment_difference_handling': 'reconcile',
+                                                'writeoff_account_id': account_ready.id,
+                                            })._create_payments()
+
+                        # for jload in json_loads['response']['order_income']:
+                        #     print(jload)
+                        #     partner = self.env['res.partner'].search([('name', '=', 'Shopee')], limit=1)
+                        #     if partner:
+                        #         vals_payout = {
+                        #             'partner_id': partner.id,
+                        #             'payment_type': 'inbound',
+                        #             'partner_type': 'customer',
+                        #             'amount': jload['payout_amount'],
+                        #             'date': jload['escrow_release_time'],
+                        #             'payout_amount': jload['payout_amount'],
+                        #             'payout_time': jload['escrow_release_time'],
+                        #             'payee_id': jload['order_sn'],
+                        #         }
+						#
+                        #         print(jload['escrow_release_time'])
+                        #         print(datetime.utcfromtimestamp(int(jload['escrow_release_time'])).strftime('%Y-%m-%d %H:%M:%S'))
+                        #         # data_ready = datas.search([('ref', '=', jload['order_sn'])])
+						#
+                        #         order_ready = self.env['sale.order'].search([('client_order_ref', '=', jload['order_sn'])])
+                        #         if order_ready:
+                        #             invoice_ready = datas.search([('ref', '=', order_ready                                                                              .client_order_ref)])
+                        #             if not invoice_ready and order_ready.partner_id and order_ready.partner_id.property_account_receivable_id:
+                        #                 context = {
+                        #                     'active_model': 'sale.order',
+                        #                     'active_ids': [order_ready.id],
+                        #                     'active_id': order_ready.id,
+                        #                 }
+                        #                 payment = self.env['sale.advance.payment.inv'].with_context(context).create(
+                        #                     {'advance_payment_method': 'delivered'})
+                        #                 payment.create_invoices()
+                        #                 invoice_ready = invoice.search([('ref', '=', order_ready.client_order_ref)])
+                        #             print(invoice_ready)
+                        #             for inv in invoice_ready:
+                        #                 print(inv)
+                        #                 if inv.state == 'draft':
+                        #                     if status in {'READY_TO_SHIP', 'PROCESSED', 'SHIPPED', 'COMPLETED'}:
+                        #                         inv.action_post()
+                        #             if invoice_ready:
+                        #                 payment = self.env['account.payment.register'].with_context(active_model='account.move',
+                        #                                                                             active_ids=[invoice_ready.id]).create(
+                        #                     {
+                        #                         'amount': jload['payout_amount'],
+                        #                         'payment_date': '2017-01-01',
+                        #                     })._create_payments()
+						#
+                        #                 # data_ready.write(vals_payout)
+                        # if json_loads['response']['more'] == 'true':
+                        #     self.get_payout_detail(page+1)
+
