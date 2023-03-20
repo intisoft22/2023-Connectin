@@ -27,6 +27,7 @@ class MarketplaceAccount(models.Model):
     refresh_access_token_shopee = fields.Char('Refresh Access Token')
     url_auth = fields.Char('URL AUTH')
     url_api = fields.Char('Url')
+    api_path = fields.Char('API')
 
     def shop_auth():
         timest = int(time.time())
@@ -161,4 +162,28 @@ class MarketplaceAccount(models.Model):
 
             print(response.text)
             json_loads = json.loads(response.text)
+            # rec.access_token_shopee = json_loads['access_token']
+
+    def get_pathapi(self):
+        for rec in self:
+            timest = int(time.time())
+            host = rec.url_api
+            path = rec.api_path
+            partner_id = rec.partner_id_shopee
+            shop_id = rec.shop_id_shopee
+            access_token = rec.access_token_shopee
+            tmp = rec.partner_key_shopee
+            partner_key = tmp.encode()
+            tmp_base_string = "%s%s%s%s%s" % (partner_id, path, timest,access_token,shop_id)
+            base_string = tmp_base_string.encode()
+            sign = hmac.new(partner_key, base_string, hashlib.sha256).hexdigest()
+            itemstatus="%5B%22NORMAL%22%5D"
+            url = host + path + "?access_token=%s&partner_id=%s&shop_id=%s&timestamp=%s&sign=%s" % (access_token,partner_id,shop_id, timest, sign)
+            # url = host + path + "?access_token=%s&partner_id=%s&shop_id=%s&timestamp=%s&sign=%s&offset=0&page_size=10&item_status=NORMAL&offset=0&page_size=10&update_time_from=1611311600&update_time_to=1611311631" % (access_token,partner_id,shop_id, timest, sign)
+
+            # url = "https://partner.test-stable.shopeemobile.com/api/v2/auth/token/get?partner_id=1023577&sign=%s&timestamp=%s" % (
+            # sign, timest)
+            print(url)
+
+
             # rec.access_token_shopee = json_loads['access_token']

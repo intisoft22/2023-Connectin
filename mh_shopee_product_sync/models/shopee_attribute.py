@@ -53,7 +53,7 @@ class ShopeeProductAttributeProduct(models.Model):
     _name = "shopee.product.attribute.product"
     _description = "Shopee Product Attribute in Product"
 
-    product_tmpl_id = fields.Many2one('product.template',  required=True)
+    product_tmpl_id = fields.Many2one('product.template')
     product_id = fields.Many2one('product.product', index=True)
     attribute_id = fields.Many2one('shopee.product.attribute',  required=True)
     is_mandatory = fields.Boolean('Mandatory')
@@ -74,7 +74,7 @@ class ShopeeProductAttributeProduct(models.Model):
     @api.depends('attribute_value_id','attribute_value_ids','attribute_value_str')
     def _compute_display_value(self):
         print("Tesss============")
-        print(self.attribute_value_id.name)
+        # print(self.attribute_value_id.name)
         for at in self:
             if at.attribute_value_id:
                 at.attribute_value_display=at.attribute_value_id.name
