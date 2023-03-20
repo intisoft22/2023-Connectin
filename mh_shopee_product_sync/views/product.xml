@@ -126,7 +126,7 @@
                             <tree editable="bottom">
                                 <field name="logistic_id" domain="[('enable','=',True),('mask_channel_id','=',0)]"/>
                                 <field name="enable" invisible="1"/>
-                                <field name="free" invisible="1"/>
+                                <field name="free"/>
                                 <field name="est_fee" invisible="1"/>
                             </tree>
                         </field>
