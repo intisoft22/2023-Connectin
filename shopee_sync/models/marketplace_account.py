@@ -355,6 +355,7 @@ class MarketplaceAccount(models.Model):
                             'shopee_stock': str(stock),
                             'sequence': sequence,
                             'type': 'product',
+                            'is_shopee': True,
                         }
                         if data_ready:
                             vals_product = {
@@ -374,6 +375,7 @@ class MarketplaceAccount(models.Model):
                                 'shopee_height': jload['dimension']['package_height'],
                                 'shopee_sku': jload['item_sku'],
                                 'shopee_stock': str(stock),
+                                'is_shopee': True,
                             }
                             print('update')
                             print(vals_product)

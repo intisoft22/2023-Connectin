@@ -1272,6 +1272,8 @@ class ProductTemplate(models.Model):
             timest = int(time.time())
 
             rec.attribute_line_ids = False
+            rec.shopee_variant_product_ids = False
+            rec.shopee_variant_product_detail_ids = False
             # account=self.account
             account = rec.shopee_account_id
             host = account.url_api
@@ -1305,38 +1307,157 @@ class ProductTemplate(models.Model):
                     raise UserError(_(str(json_loads['message'])))
                 else:
                     vals2=[]
+                    vals3=[]
                     for tier in json_loads['response']['tier_variation']:
                         product_attribute_odoo = self.env['product.attribute'].search([('name', '=',tier['name'])])
                         values_odoo = []
+                        detail_variant = []
                         if product_attribute_odoo:
                             attribute_id_odoo = product_attribute_odoo[0]
-
+                            tiers=0
                             for value in tier['option_list']:
                                 attribute_variant_value_odoo = self.env['product.attribute.value'].search(
                                     [('name', '=', value['option']), ('attribute_id', '=', attribute_id_odoo.id)])
                                 if attribute_variant_value_odoo:
 
                                     values_odoo.append(attribute_variant_value_odoo[0].id)
+                                    id_value_odoo=attribute_variant_value_odoo[0]
                                 else:
-                                    id_value_shopee = self.env['product.attribute.value'].create(
+                                    id_value_odoo = self.env['product.attribute.value'].create(
                                         {'name': value['option'],
                                          'attribute_id': attribute_id_odoo.id})
 
-                                    values_odoo.append(id_value_shopee.id)
-
+                                    values_odoo.append(id_value_odoo.id)
+                                detailvariant = (0, 0, {'value_id2': id_value_odoo.id, 'tier': tiers, 'tier_tobe': tiers})
+                                detail_variant.append(detailvariant)
+                                tiers+=1
 
                         else:
                             attribute_id_odoo = self.env['product.attribute'].create( {'name': tier['name']})
-
+                            tiers=0
                             for value in tier['option_list']:
                                 id_value_odoo = self.env['product.attribute.value'].create(
                                     {'name': value['option'],
                                      'attribute_id': attribute_id_odoo.id})
 
                                 values_odoo.append(id_value_odoo.id)
+                                detailvariant = (0, 0, {'value_id2': id_value_odoo.id, 'tier': tiers, 'tier_tobe': tier})
+                                detail_variant.append(detailvariant)
+                                tiers += 1
                         vals2.append(
                             (0, 0, {'attribute_id': attribute_id_odoo.id, 'value_ids': [(6, 0, values_odoo)]}))
+                        vals3.append(
+                            (0, 0, {'attribute_id2': attribute_id_odoo.id, 'shopee_variant_value_detail_ids2': detail_variant, 'value_ids2': [(6, 0, values_odoo)]}))
                     rec.attribute_line_ids=vals2
+                    rec.shopee_variant_product_ids=vals3
+                    vals4=[]
+                    values_shop_all = []
+                    for variant_shop in rec.shopee_variant_product_ids:
+
+                        values_shop = []
+                        for value_shop in variant_shop.value_ids2:
+                            values_shop.append(value_shop.id)
+                        values_shop_all.append(values_shop)
+
+                    for tier in json_loads['response']['model']:
+                        tarray=[]
+                        for t in tier['tier_index']:
+                            tarray.append(str(t))
+                        tierstr=','.join(tarray)
+                        vals_shop=[]
+                        if len(tier['tier_index'])>1:
+                            vals_shop = [values_shop_all[0][tier['tier_index'][0]]] + [values_shop_all[1][tier['tier_index'][1]]]
+                        else:
+
+                            vals_shop = [values_shop_all[0][tier['tier_index'][0]]]
+
+                        vals4.append((0, 0, {'shopee_price': tier['price_info'][0]['original_price'], 'tier': tierstr,
+                                                         'tier_tobe': tierstr,
+                                                         'model_id': tier['model_id'],
+                                                         'value_ids': [(6, 0, vals_shop)]}))
+
+                    print(vals4)
+                    rec.shopee_variant_product_detail_ids=vals4
+
+                    for p in rec.shopee_variant_product_detail_ids:
+                        valuear = []
+                        for at in p.value_ids:
+                            valuear.append(at.name)
+                        product_ids = self.env['product.product'].search(
+                            [('product_tmpl_id', '=', rec.id)])
+                        for prd in product_ids:
+                            valueprd = []
+                            if prd.product_template_attribute_value_ids:
+                                for atprd in prd.product_template_attribute_value_ids:
+                                    valueprd.append(atprd.name)
+                                sama = True
+                                for x in valueprd:
+                                    if x not in valuear:
+                                        sama = False
+                                if sama:
+                                    p.product_id = prd.id
+                                    p.product_id.shopee_model_id = p.model_id
+                    # values_shop_all = []
+                    # for variant_shop in rec.shopee_variant_product_ids:
+                    #
+                    #     values_shop = []
+                    #     for value_shop in variant_shop.value_ids2:
+                    #         values_shop.append(value_shop.id)
+                    #     values_shop_all.append(values_shop)
+                    # tier1 = 0
+                    # tierstr = []
+                    # print((values_shop_all))
+                    # print(len(values_shop_all))
+                    # if len(values_shop_all) > 1:
+                    #     for v0 in values_shop_all[0]:
+                    #
+                    #         tier2 = 0
+                    #         for v1 in values_shop_all[1]:
+                    #             vals_shop = [v0] + [v1]
+                    #             tierstr = str(tier1) + "," + str(tier2)
+                    #             tier2 += 1
+                    #             vals3.append((0, 0, {'shopee_price': rec.shopee_price, 'tier': tierstr,
+                    #                                  'tier_tobe': tierstr,
+                    #                                  'value_ids': [(6, 0, vals_shop)]}))
+                    #
+                    #         tier1 += 1
+                    # else:
+                    #
+                    #     for v0 in values_shop_all[0]:
+                    #         vals_shop = [v0]
+                    #         tierstr = str(tier1)
+                    #         vals3.append(
+                    #             (0, 0, {'shopee_price': product_obj.shopee_price, 'tier': tierstr, 'tier_tobe': tierstr,
+                    #                     'value_ids': [(6, 0, vals_shop)]}))
+                    #
+                    #         tier1 += 1
+                    #     print(vals3)
+                    # print("==================")
+                    # product_obj.shopee_variant_product_detail_ids = vals3
+                    # for p in rec.shopee_variant_product_detail_ids:
+                    #     valuear = []
+                    #     for at in p.value_ids:
+                    #         valuear.append(at.name)
+                    #
+                    #     product_ids = self.env['product.product'].search(
+                    #         [('product_tmpl_id', '=', self.env.context['active_ids'])])
+                    #     for prd in product_ids:
+                    #         valueprd = []
+                    #         if prd.product_template_attribute_value_ids:
+                    #             for atprd in prd.product_template_attribute_value_ids:
+                    #                 valueprd.append(atprd.name)
+                    #             sama = True
+                    #             for x in valueprd:
+                    #                 if x not in valuear:
+                    #                     sama = False
+                    #             if sama:
+                    #                 p.product_id = prd.id
+                    #
+                    # product_obj.needgenerate_shopee = False
+                    # product_obj.needupdate_shopee = True
+                    # product_obj.changevariant_shopee = False
+                    # product_obj.variant_ok = False
+                    #
 
 class ShopeeImageProduct(models.Model):
     _name = "shopee.image.product"

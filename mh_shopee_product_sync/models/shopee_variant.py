@@ -58,7 +58,7 @@ class ShopeeAttributeVariantProduct(models.Model):
     _name = "shopee.attribute.variant.product"
     _description = "Shopee variant in Product"
 
-    product_tmpl_id = fields.Many2one('product.template', string="Product Template", ondelete='cascade', required=True,
+    product_tmpl_id = fields.Many2one('product.template', string="Product Template", ondelete='cascade',
                                       index=True)
 
     attribute_id2 = fields.Many2one('product.attribute', string="Attribute", ondelete='restrict', required=True,
