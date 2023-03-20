@@ -139,7 +139,7 @@ class StockMove(models.Model):
                                     for jload in json_loads['response']['success_list']:
                                         # print(json_loads)
                                         messgs = 'success'
->>>>>>> 3a3d51c091a4068b90ceb2451db48f8e0a8dc083
+# >>>>>>> 3a3d51c091a4068b90ceb2451db48f8e0a8dc083
         res = super(StockMove, self).write(vals)
         return res
 
