@@ -29,6 +29,12 @@ header2 = {
 }
 
 
+class ResPartner(models.Model):
+    _inherit = 'res.partner'
+
+    marketplace_account_id = fields.Many2one('marketplace.account', string='Marketplace Account')
+    reconcile_account_id = fields.Many2one('account.account', string='Reconcile Account')
+
 class ProductCategory(models.Model):
     _inherit = 'product.category'
 

@@ -22,7 +22,7 @@ class MarketplaceAccount(models.Model):
 
     def get_category(self):
         for rec in self:
-            self.get_token()
+            # self.get_token()
             timest = int(time.time())
             host = rec.url_api
             path = "/api/v2/product/get_category"
@@ -95,7 +95,7 @@ class MarketplaceAccount(models.Model):
     def get_brand(self, categ_id, shopee_categ_id,offset):
         for rec in self:
             print(categ_id)
-            self.get_token()
+            # self.get_token()
             timest = int(time.time())
             host = rec.url_api
             path = "/api/v2/product/get_brand_list"
@@ -155,7 +155,7 @@ class MarketplaceAccount(models.Model):
 
     def get_product(self, offset=0):
         for rec in self:
-            self.get_token()
+            # self.get_token()
             timest = int(time.time())
             host = rec.url_api
             # path = "api/v2/logistics/get_channel_list"
@@ -188,6 +188,7 @@ class MarketplaceAccount(models.Model):
 
             # print(response)
             json_loads = json.loads(response.text)
+            print(json_loads)
 
             # rec.access_token_shopee = json_loads['access_token']
             return2 = []
@@ -425,7 +426,7 @@ class MarketplaceAccount(models.Model):
 
     def post_upload_image(self):
         for rec in self:
-            self.get_token()
+            # self.get_token()
             timest = int(time.time())
             host = rec.url_api
             path = "/api/v2/media_space/upload_image"
@@ -509,7 +510,7 @@ class MarketplaceAccount(models.Model):
 
     def get_order(self):
         for rec in self:
-            self.get_token()
+            # self.get_token()
             timest = int(time.time())
             host = rec.url_api
             path = "/api/v2/order/get_order_list"
@@ -545,7 +546,7 @@ class MarketplaceAccount(models.Model):
 
     def get_order_time(self, start_date, end_date):
         for rec in self:
-            self.get_token()
+            # self.get_token()
             timest = int(time.time())
             host = rec.url_api
             path = "/api/v2/order/get_order_list"
@@ -791,7 +792,7 @@ class MarketplaceAccount(models.Model):
 
     def get_logistic(self):
         for rec in self:
-            self.get_token()
+            # self.get_token()
             timest = int(time.time())
             host = rec.url_api
             path = "/api/v2/logistics/get_channel_list"
@@ -874,7 +875,7 @@ class MarketplaceAccount(models.Model):
             url_address = con1.value
         forca_token = conf_obj.search([('key', '=', 'shopee.default.token')])
         for rec in self:
-            self.get_token()
+            # self.get_token()
             timest = int(time.time())
             host = rec.url_api
             path = "/api/v2/product/add_item"
@@ -921,7 +922,7 @@ class MarketplaceAccount(models.Model):
 
 
     def get_all_escrow(self):
-        self.get_token()
+        # self.get_token()
         order_ready = self.env['sale.order'].search([('shopee_order_status', '!=', False)])
         for order in order_ready:
             self.get_escrow_detail(order=order)
@@ -979,9 +980,11 @@ class MarketplaceAccount(models.Model):
                                         {'advance_payment_method': 'delivered'})
                                     payment.create_invoices()
                                     invoice_ready = datas.search([('ref', '=', order.client_order_ref)])
-                                account_ready = self.env['account.account'].search([('code', '=', '1-111001')])
                                 print(invoice_ready)
                                 for inv in invoice_ready:
+                                    account_ready = inv.reconcile_account_id.id
+                                    if not account_ready:
+                                        account_ready = self.env['account.account'].search([('code', '=', '1-111001')]).id
                                     print(inv)
                                     if inv.state == 'draft':
                                         if order.shopee_order_status in {'READY_TO_SHIP', 'PROCESSED', 'SHIPPED', 'COMPLETED'}:
@@ -993,7 +996,7 @@ class MarketplaceAccount(models.Model):
                                                 'amount': escrow_amount,
                                                 'payment_date': '2017-01-01',
                                                 'payment_difference_handling': 'reconcile',
-                                                'writeoff_account_id': account_ready.id,
+                                                'writeoff_account_id': account_ready,
                                             })._create_payments()
 
                         # for jload in json_loads['response']['order_income']:
