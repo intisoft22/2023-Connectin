@@ -53,7 +53,7 @@ class ProductTemplate(models.Model):
     variant_ok = fields.Boolean('Variant')
     shopee_name = fields.Char('Shopee Name')
     shopee_desc = fields.Text('Shopee Description')
-    shopee_product_id = fields.Char('Shopee Product ID', readonly=1)
+    shopee_product_id = fields.Char('Shopee Product ID', readonly=1,copy=False)
     shopee_category_id = fields.Many2one('shopee.product.category', 'Shopee Category',
                                          domain="[('has_children','=',False)]")
     shopee_brand_id = fields.Many2one('shopee.brand', 'Shopee Brand')
@@ -65,7 +65,7 @@ class ProductTemplate(models.Model):
         store=False,
     )
     shopee_price = fields.Float('Shopee Price', digits='Product Price')
-    shopee_condition = fields.Selection([('NEW', 'NEW'), ('SECOND', 'SECOND')], 'Condition')
+    shopee_condition = fields.Selection([('NEW', 'NEW'), ('USED', 'SECOND')], 'Condition')
     shopee_item_status = fields.Selection([('UNLIST', 'ARCHIVE'), ('NORMAL', 'NORMAL')], 'Status', default='NORMAL')
 
     shopee_weight = fields.Float("Shopee Weight")
@@ -84,6 +84,7 @@ class ProductTemplate(models.Model):
     countvariant_shopee = fields.Integer("Count Variant Shopee", compute="_compute_variant_count", store=True)
     countvariant_odoo = fields.Integer("Count Variant Odoo", compute="_compute_variant_count", store=True)
     needgenerate_shopee = fields.Boolean("Need Generate Variant", compute="_compute_variant_count", store=True)
+    needreset_shopee = fields.Boolean("Need Reset Variant", compute="_compute_variant_count", store=True)
     needupdate_shopee = fields.Boolean("Need Update Variant")
     changevariant_shopee = fields.Boolean("Change Variant")
     dateupload_shopee = fields.Datetime("Shopee Upload Date")
@@ -100,8 +101,13 @@ class ProductTemplate(models.Model):
         for prd in self:
             prd.countvariant_shopee = len(prd.shopee_variant_product_ids)
             prd.countvariant_odoo = len(prd.attribute_line_ids)
-            if prd.countvariant_odoo != prd.countvariant_shopee:
+            if prd.countvariant_odoo > prd.countvariant_shopee:
                 prd.needgenerate_shopee = True
+                prd.needreset_shopee = False
+            else:
+                prd.needreset_shopee = True
+                prd.needgenerate_shopee = False
+
 
     @api.depends('shopee_category_id')
     def _compute_shopee_brand_id_domain(self):
@@ -884,8 +890,7 @@ class ProductTemplate(models.Model):
 
     def reset_variant_shopee(self):
         for rec in self:
-            if rec.countvariant_odoo !=0:
-                raise UserError(_('Please delete product variant odoo first!'))
+            rec.shopee_account_id.get_token()
             if rec.shopee_variant_product_detail_ids:
                 for dtiervariant in sorted(rec.shopee_variant_product_detail_ids, key=lambda b: (b.tier_tobe)):
                     item_id= dtiervariant.product_tmpl_id.shopee_product_id

@@ -153,6 +153,7 @@
                         <field name="countvariant_shopee" groups="base.group_no_one"/>
                         <field name="countvariant_odoo" groups="base.group_no_one"/>
                         <field name="needgenerate_shopee" groups="base.group_no_one"/>
+                        <field name="needreset_shopee" groups="base.group_no_one"/>
                         <field name="needupdate_shopee" groups="base.group_no_one"/>
                         <field name="changevariant_shopee" groups="base.group_no_one"/>
                         <field name="variant_ok" groups="base.group_no_one"/>
@@ -163,7 +164,7 @@
 
                     <button name="update_variant_shopee_act" string="Update Variant" type="object"
                             attrs="{'invisible':[('changevariant_shopee','!=',True)]}"/>
-                    <button name="reset_variant_shopee" string="Reset Variant" type="object" attrs="{'invisible':[('countvariant_shopee','=',0)]}"
+                    <button name="reset_variant_shopee" string="Reset Variant" type="object" attrs="{'invisible':[('needreset_shopee','!=',True)]}"
                             />
                     <group name="variant_product">
                         <field name="shopee_variant_product_ids" attrs="{'readonly':[('needupdate_shopee','=',True)]}">
