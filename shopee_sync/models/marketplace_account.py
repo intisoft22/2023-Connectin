@@ -351,7 +351,7 @@ class MarketplaceAccount(models.Model):
                             'weight': jload['weight'],
                             'shopee_product_status': jload['item_status'],
                             'shopee_item_status': jload['item_status'],
-                            'shopee_weight': jload['weight'],
+                            'shopee_weight': float(jload['weight'])*1000,
                             'shopee_length': jload['dimension']['package_length'],
                             'shopee_width': jload['dimension']['package_width'],
                             'shopee_height': jload['dimension']['package_height'],
@@ -373,7 +373,7 @@ class MarketplaceAccount(models.Model):
                                 'weight': jload['weight'],
                                 'shopee_product_status': jload['item_status'],
                                 'shopee_item_status': jload['item_status'],
-                                'shopee_weight': jload['weight'],
+                                'shopee_weight': float(jload['weight'])*1000,
                                 'shopee_length': jload['dimension']['package_length'],
                                 'shopee_width': jload['dimension']['package_width'],
                                 'shopee_height': jload['dimension']['package_height'],
@@ -421,7 +421,8 @@ class MarketplaceAccount(models.Model):
 
 
                                 idproduct.shopee_image_ids =imagearray
-
+                        idproduct.changevariant_shopee =False
+                        idproduct.variant_ok =False
 
     def post_upload_image(self):
         for rec in self:
