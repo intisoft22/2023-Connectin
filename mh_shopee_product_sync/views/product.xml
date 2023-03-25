@@ -122,10 +122,13 @@
                                    attrs="{'required':[('is_shopee','=',True)]}"/>
                             cm
                         </div>
-                        <field name="shopee_logistic_ids"  required="True">
+                        <field name="shopee_logistic_ids"  required="True" context="{ 'default_shop_account_id': shopee_account_id,}">
                             <tree editable="bottom">
-                                <field name="logistic_id" domain="[('enable','=',True),('mask_channel_id','=',0)]"/>
+                                <field name="logistic_domain"  />
+                                <field name="logistic_id" domain="logistic_domain"/>
                                 <field name="enable" invisible="1"/>
+                                <field name="shop_account_id" invisible="1"/>
+
                                 <field name="free"/>
                                 <field name="est_fee" invisible="1"/>
                             </tree>

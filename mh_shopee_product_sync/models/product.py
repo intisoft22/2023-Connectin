@@ -1185,6 +1185,7 @@ class ProductTemplate(models.Model):
                     data_ready = datas.search([('shopee_logistic_id', '=', v['logistic_id'])])
                     vals_product_attribute = {
                         'logistic_id': data_ready[0].id,
+                        'shop_account_id': rec.shopee_account_id.id,
                         'free': v['is_free'],
 
 
@@ -1246,15 +1247,33 @@ class ProductTemplate(models.Model):
                                     'attribute_value_domain': json.dumps([('attribute_id', '=', data_ready[0].id), (
                                     'product_category_ids', '=', rec.shopee_category_id.id)])
                                 }
+                                print(value_ids)
                                 for value in value_ids:
                                     if value['attribute_id'] ==jload['attribute_id']:
                                         print (value['attribute_id'])
                                         print (jload['attribute_id'])
+                                        print (jload['input_type'])
                                         if jload['input_type'] in ['COMBO_BOX','DROP_DOWN']:
                                             datas_value= self.env['shopee.product.attribute.value']
+                                            print(value['attribute_value_list'][0]['value_id'])
                                             datavalue_ready = datas_value.search([('value_id', '=', value['attribute_value_list'][0]['value_id'])])
+                                            if datavalue_ready:
+                                                vals_product_attribute['attribute_value_id']=datavalue_ready[0].id
+                                            else:
+                                                vals_product_valueattribute = {
+                                                    'name': value['attribute_value_list'][0]['original_value_name'],
+                                                    'display_value_name': value['attribute_value_list'][0]['original_value_name'],
+                                                    'value_id': value['attribute_value_list'][0]['value_id'],
+                                                    'attribute_id': data_ready[0].id,
+                                                    'product_category_ids': [(4, rec.shopee_category_id.id)],
 
-                                            vals_product_attribute['attribute_value_id']=datavalue_ready[0].id
+                                                }
+                                                if 'value_unit' in value['attribute_value_list'][0]:
+                                                    vals_product_valueattribute['value_unit'] = value['attribute_value_list'][0][
+                                                        'value_unit']
+                                                value_id = datas_value.create(vals_product_valueattribute)
+                                                vals_product_attribute['attribute_value_id'] = value_id.id
+
                                         if jload['input_type'] == 'TEXT_FILED':
                                             vals_product_attribute['attribute_value_str']=value['attribute_value_list'][0]['original_value_name']
                                         if jload['input_type'] in ['MULTIPLE_SELECT','MULTIPLE_SELECT_COMBO_BOX']:
@@ -1262,10 +1281,26 @@ class ProductTemplate(models.Model):
                                             attrshopee=[]
                                             for vshopee in value['attribute_value_list']:
                                                 datavalue_ready = datas_value.search([('attribute_id', '=', data_ready[0].id),('value_id', '=', vshopee['value_id'])])
-                                                print(vshopee['value_id'])
-                                                for x in datavalue_ready:
-                                                    print(x.name)
-                                                attrshopee.append(datavalue_ready.id)
+                                                if datavalue_ready:
+                                                    print(vshopee['value_id'])
+                                                    for x in datavalue_ready:
+                                                        print(x.name)
+                                                    attrshopee.append(datavalue_ready.id)
+                                                else:
+                                                    vals_product_valueattribute = {
+                                                        'name': vshopee['original_value_name'],
+                                                        'display_value_name': vshopee['original_value_name'],
+                                                        'value_id': vshopee['value_id'],
+                                                        'attribute_id': data_ready[0].id,
+                                                        'product_category_ids': [(4, rec.shopee_category_id.id)],
+
+                                                    }
+                                                    if 'value_unit' in vshopee:
+                                                        vals_product_valueattribute['value_unit'] = vshopee[
+                                                            'value_unit']
+                                                    value_id = datas_value.create(vals_product_valueattribute)
+
+                                                    attrshopee.append(value_id.id)
                                             vals_product_attribute['attribute_value_ids']=[(6,0,attrshopee)]
                                 print(vals_product_attribute)
                                 attributearray.append((0, 0, vals_product_attribute))
@@ -1333,7 +1368,7 @@ class ProductTemplate(models.Model):
                                          'attribute_id': attribute_id_odoo.id})
 
                                     values_odoo.append(id_value_odoo.id)
-                                detailvariant = (0, 0, {'value_id2': id_value_odoo.id, 'tier': tiers, 'tier_tobe': tiers})
+                                detailvariant = (0, 0, {'value_id2': id_value_odoo.id, 'tier': tiers})
                                 detail_variant.append(detailvariant)
                                 tiers+=1
 
@@ -1346,7 +1381,7 @@ class ProductTemplate(models.Model):
                                      'attribute_id': attribute_id_odoo.id})
 
                                 values_odoo.append(id_value_odoo.id)
-                                detailvariant = (0, 0, {'value_id2': id_value_odoo.id, 'tier': tiers, 'tier_tobe': tier})
+                                detailvariant = (0, 0, {'value_id2': id_value_odoo.id, 'tier': tiers})
                                 detail_variant.append(detailvariant)
                                 tiers += 1
                         vals2.append(
@@ -1377,7 +1412,6 @@ class ProductTemplate(models.Model):
                             vals_shop = [values_shop_all[0][tier['tier_index'][0]]]
 
                         vals4.append((0, 0, {'shopee_price': tier['price_info'][0]['original_price'], 'tier': tierstr,
-                                                         'tier_tobe': tierstr,
                                                          'model_id': tier['model_id'],
                                                          'value_ids': [(6, 0, vals_shop)]}))
 
