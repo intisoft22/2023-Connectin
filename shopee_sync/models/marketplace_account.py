@@ -214,70 +214,6 @@ class MarketplaceAccount(models.Model):
                         return2.append(str(json_loads['response']['total_count']))
             print(item_list)
 
-    def get_model_product_detail(self, item_list):
-        for rec in self:
-            timest = int(time.time())
-            host = rec.url_api
-            path = "/api/v2/product/get_model_list"
-            partner_id = rec.partner_id_shopee
-            shop_id = rec.shop_id_shopee
-            access_token = rec.access_token_shopee
-            tmp = rec.partner_key_shopee
-            partner_key = tmp.encode()
-            tmp_base_string = "%s%s%s%s%s" % (partner_id, path, timest, access_token, shop_id)
-            base_string = tmp_base_string.encode()
-            sign = hmac.new(partner_key, base_string, hashlib.sha256).hexdigest()
-
-            url = host + path + "?item_id=%s&access_token=%s&partner_id=%s&shop_id=%s&timestamp=%s&sign=%s&need_complaint_policy=true&need_tax_info=true" % (
-            item_list, access_token, partner_id, shop_id, timest, sign)
-            print(url)
-            payload = json.dumps({
-            })
-            headers = {
-                'Content-Type': 'application/json'
-            }
-            response = requests.request("GET", url, headers=headers, data=payload, allow_redirects=False)
-
-            # print(response.text)
-            json_loads = json.loads(response.text)
-            print(json_loads)
-            # rec.access_token_shopee = json_loads['access_token']
-            return2 = []
-            sequence = 100
-            datas = self.env['product.template']
-            if json_loads:
-                if json_loads['error'] == 'error_param':
-                    return2.append(str(json_loads['msg']))
-                else:
-                    for jload in json_loads['response']['model']:
-                        sequence += 1
-                        data_ready = datas.search([('shopee_product_id', '=', jload['item_id'])])
-                        category_id = False
-                        # if 'category_id' in jload:
-                        #     # category_id = self.env['product.category'].search(
-                        #     category_id = self.env['shopee.product.category'].search(
-                        #         [('shopee_category_id', '=', jload['category_id'])]).id
-                        if category_id is False:
-                            category_id = self.env['product.category'].search([('name', '=', 'All')])
-                        vals_product = {
-                            'shopee_product_id': jload['item_id'],
-                            'categ_id': category_id.id,
-                            'name': jload['item_name'],
-                            'shopee_name': jload['item_name'],
-                            'weight': jload['weight'],
-                            'shopee_product_status': jload['item_status'],
-                            'shopee_item_status': jload['item_status'],
-                            'sequence': sequence,
-                            'type': 'product',
-                        }
-                        print(vals_product)
-                        if data_ready:
-                            print('update')
-                            datas.write(vals_product)
-                        else:
-                            print('create')
-                            datas.create(vals_product)
-
     def get_product_detail(self, item_list):
         for rec in self:
             timest = int(time.time())
@@ -424,90 +360,6 @@ class MarketplaceAccount(models.Model):
                                 idproduct.shopee_image_ids =imagearray
                         idproduct.changevariant_shopee =False
                         idproduct.variant_ok =False
-
-    def post_upload_image(self):
-        for rec in self:
-            # self.get_token()
-            timest = int(time.time())
-            host = rec.url_api
-            path = "/api/v2/media_space/upload_image"
-            partner_id = rec.partner_id_shopee
-            shop_id = rec.shop_id_shopee
-            access_token = rec.access_token_shopee
-            tmp = rec.partner_key_shopee
-            partner_key = tmp.encode()
-            tmp_base_string = "%s%s%s%s%s" % (partner_id, path, timest, access_token, shop_id)
-            base_string = tmp_base_string.encode()
-            sign = hmac.new(partner_key, base_string, hashlib.sha256).hexdigest()
-            itemstatus = "%5B%22NORMAL%22%5D"
-            url = host + path + "?access_token=%s&partner_id=%s&timestamp=%s&sign=%s" % (
-            access_token, partner_id, timest, sign)
-            # url = host + path + "?access_token=%s&partner_id=%s&shop_id=%s&timestamp=%s&sign=%s&offset=0&page_size=10&item_status=NORMAL&offset=0&page_size=10&update_time_from=1611311600&update_time_to=1611311631" % (access_token,partner_id,shop_id, timest, sign)
-
-            # url = "https://partner.test-stable.shopeemobile.com/api/v2/auth/token/get?partner_id=1023577&sign=%s&timestamp=%s" % (
-            # sign, timest)
-
-            attachmentts = self.env['ir.attachment'].search([('name', '=', 'test.png')])
-            params_file = []
-            for attachmentt in attachmentts:
-                filepath = attachmentt._full_path(attachmentt.store_fname)
-                file_attach = ('image', ('image', open(filepath, "rb"), 'application/octet-stream'))
-                # file_attach = ('file', ('image', open(filepath, "rb"), attachmentt.mimetype))
-                # file_attach = ('file', (attachmentt.datas_fname, open(filepath, "rb"), attachmentt.mimetype))
-                params_file.append(file_attach)
-            # response = requests.post(
-            #     url=('%s/other/v1/setSalesOrderCompletewithFiles' % (company_ldap.forca_ws.strip())), headers={
-            #         'Forca-Token': self.env.user.forca_token
-            #     }, data=params_txt, files=params_file)
-
-            print(url)
-            files = [
-                ('image',
-                 ('image', open('/media/oem/zuku/Addon/HRMS14/shopee/test.png', 'rb'), 'application/octet-stream'))
-                # Replace with actual file path
-            ]
-
-            payload = json.dumps({
-                "scene": "-",
-                "image": "path/to/file"
-            })
-            headers = {
-                'Content-Type': 'application/json'
-            }
-            # response = requests.request("GET", url, headers=headers, data=payload, allow_redirects=False)
-
-            response = requests.request("POST", url, headers=headers, data=payload, files=params_file,
-                                        allow_redirects=False)
-
-            print(response.text)
-            json_loads = json.loads(response.text)
-
-            # rec.access_token_shopee = json_loads['access_token']
-            return2 = []
-            datas = self.env['product.template']
-            try:
-                if json_loads:
-                    if json_loads['error'] == 'error_param':
-                        return2.append(str(json_loads['msg']))
-                    else:
-                        for jloads in json_loads['response']:
-                            for jload in jloads['item_list']:
-                                print(jload)
-                                data_ready = datas.search([('shopee_product_id', '=', str(jload['item_id']))])
-                                # category_id = False
-                                # if jload['category_id']:
-                                #     category_id = self.env['product.category'].search([('shopee_category_id', '=', jload['category_id'])]).id
-                                # vals_product = {
-                                #     'shopee_product_id': jload['item_id'],
-                                #     'category_id': category_id,
-                                #     'name': jload['item_name'],
-                                # }
-                                # if data_ready:
-                                #     updated = datas.write(vals_product)
-                                # else:
-                                #     created = datas.create(vals_product)
-            except Exception as e:
-                return2.append(str(e))
 
     def get_order(self):
         for rec in self:
@@ -890,61 +742,6 @@ class MarketplaceAccount(models.Model):
                 },
             }
 
-
-    def addProduct(self):
-        conf_obj = self.env['ir.config_parameter']
-        url_address = False
-        forca_address = conf_obj.search([('key', '=', 'shopee.address')])
-        for con1 in forca_address:
-            url_address = con1.value
-        forca_token = conf_obj.search([('key', '=', 'shopee.default.token')])
-        for rec in self:
-            # self.get_token()
-            timest = int(time.time())
-            host = rec.url_api
-            path = "/api/v2/product/add_item"
-            partner_id = rec.partner_id_shopee
-            shop_id = rec.shop_id_shopee
-            access_token = rec.access_token_shopee
-            tmp = rec.partner_key_shopee
-            partner_key = tmp.encode()
-            tmp_base_string = "%s%s%s%s%s" % (partner_id, path, timest, access_token, shop_id)
-            base_string = tmp_base_string.encode()
-            sign = hmac.new(partner_key, base_string, hashlib.sha256).hexdigest()
-            url = host + path + "?access_token=%s&partner_id=%s&shop_id=%s&timestamp=%s&sign=%s" % (
-                access_token, partner_id, shop_id, timest, sign)
-            print(url)
-            payload = {
-            }
-
-            headers = {}
-            response = requests.request("GET", url, headers=headers, data=payload, allow_redirects=False)
-            print(response.text)
-            if '404' in str(response.text):
-                raise AccessError(_('404 api url not found'))
-            json_loads = json.loads(response.text)
-            return2 = []
-            datas = self.env['product.template']
-            if json_loads:
-                if json_loads['codestatus'] == 'E':
-                    return2.append(str(json_loads['message']))
-                else:
-                    for jloads in json_loads['response']:
-                            data_ready = datas.search([('shopee_product_id', '=', str(jload['item_id']))])
-                            category_id = False
-                            if jload['category_id']:
-                                category_id = self.env['shopee.product.category'].search([('shopee_category_id', '=', jload['category_id'])]).id
-                            vals_product = {
-                                'shopee_product_id': str(jload['item_id']),
-                                'category_id': category_id,
-                                'name': jload['item_name']
-                                }
-                            if data_ready:
-                                updated = datas.write(vals_product)
-                            else:
-                                created = datas.create(vals_product)
-
-
     def get_all_escrow(self):
         # self.get_token()
         order_ready = self.env['sale.order'].search([('shopee_order_status', '!=', False)])
@@ -1004,24 +801,24 @@ class MarketplaceAccount(models.Model):
                                         {'advance_payment_method': 'delivered'})
                                     payment.create_invoices()
                                     invoice_ready = datas.search([('ref', '=', order.client_order_ref)])
-                                print(invoice_ready)
-                                for inv in invoice_ready:
-                                    account_ready = inv.reconcile_account_id.id
-                                    if not account_ready:
-                                        account_ready = self.env['account.account'].search([('code', '=', '1-111001')]).id
-                                    print(inv)
-                                    if inv.state == 'draft':
-                                        if order.shopee_order_status in {'READY_TO_SHIP', 'PROCESSED', 'SHIPPED', 'COMPLETED'}:
-                                            inv.action_post()
-                                    if (inv.state == 'posted') and (inv.payment_state != 'paid'):
-                                        payment = self.env['account.payment.register'].with_context(active_model='account.move',
-                                                                                                    active_ids=[invoice_ready.id]).create(
-                                            {
-                                                'amount': escrow_amount,
-                                                'payment_date': '2017-01-01',
-                                                'payment_difference_handling': 'reconcile',
-                                                'writeoff_account_id': account_ready,
-                                            })._create_payments()
+                                    print(invoice_ready)
+                                    for inv in invoice_ready:
+                                        account_ready = inv.partner_id.reconcile_account_id.id
+                                        if not account_ready:
+                                            account_ready = self.env['account.account'].search([('code', '=', '1-111001')]).id
+                                        print(inv)
+                                        if inv.state == 'draft':
+                                            if order.shopee_order_status in {'READY_TO_SHIP', 'PROCESSED', 'SHIPPED', 'COMPLETED'}:
+                                                inv.action_post()
+                                        if (inv.state == 'posted') and (inv.payment_state != 'paid'):
+                                            payment = self.env['account.payment.register'].with_context(active_model='account.move',
+                                                                                                        active_ids=[invoice_ready.id]).create(
+                                                {
+                                                    'amount': escrow_amount,
+                                                    'payment_date': '2017-01-01',
+                                                    'payment_difference_handling': 'reconcile',
+                                                    'writeoff_account_id': account_ready,
+                                                })._create_payments()
 
                         # for jload in json_loads['response']['order_income']:
                         #     print(jload)

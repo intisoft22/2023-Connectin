@@ -68,6 +68,10 @@ class MarketplaceAccount(models.Model):
             # return html_page
             # webUrl = urllib.request.urlopen(url)
 
+    def set_draft(self):
+        for rec in self:
+            rec.state='new'
+
     def get_token(self):
         for rec in self:
             timest = int(time.time())
@@ -130,7 +134,8 @@ class MarketplaceAccount(models.Model):
                 json_loads = json.loads(response.text)
                 rec.access_token_shopee = json_loads['access_token']
                 rec.refresh_access_token_shopee = json_loads['refresh_token']
-
+            rec.state='authenticated'
+            
     def get_product(self):
         for rec in self:
             timest = int(time.time())

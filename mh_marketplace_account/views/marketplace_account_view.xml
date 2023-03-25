@@ -12,10 +12,12 @@
                                 class="oe_highlight"/>
                         <button string="Get token" type="object" name="get_token" states='new'
                                 class="oe_highlight"/>
-                        <button string="Get Product" type="object" name="get_product" states='new'
+                        <button string="Get Product" type="object" name="get_product" states='authenticated'
                                 class="oe_highlight"/>
-                        <button string="Generate API PATH" type="object" name="get_pathapi" states='new'
-                                class="oe_highlight"/>
+                        <button string="Generate API PATH" type="object" name="get_pathapi" states='authenticated'
+                                class="oe_highlight" groups="base.group_no_one"/>
+                        <button string="Set to draft" type="object" name="set_draft" states='authenticated'
+                                />
                         <field name="state" widget="statusbar" statusbar_visible="draft,authenticated"/>
                     </header>
                 <sheet>
