@@ -1185,6 +1185,7 @@ class ProductTemplate(models.Model):
                     data_ready = datas.search([('shopee_logistic_id', '=', v['logistic_id'])])
                     vals_product_attribute = {
                         'logistic_id': data_ready[0].id,
+                        'shop_account_id': rec.shopee_account_id.id,
                         'free': v['is_free'],
 
 
