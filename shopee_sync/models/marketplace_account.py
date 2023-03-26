@@ -507,6 +507,7 @@ class MarketplaceAccount(models.Model):
                             'shopee_order_status': jload['order_status'],
                             'shopee_payment_method': jload['payment_method'],
                             'shopee_shipping_carrier': jload['shipping_carrier'],
+                            'marketplace_account_id': rec.id,
                         }
                         status = jload['order_status']
 
@@ -574,6 +575,8 @@ class MarketplaceAccount(models.Model):
                                             picking_ready.action_toggle_is_locked()
                             so_id = data_ready
                         else:
+                            print("vals orer ================")
+                            print(vals_order)
                             created = datas.create(vals_order)
                             print(created)
                             for prod in jload['item_list']:
@@ -639,6 +642,7 @@ class MarketplaceAccount(models.Model):
                                     else:
                                         pack_ready = package.create(vals_pack)
 
+          
                             picking_ready = picking.search([('origin', '=', so_id.name)])
                             if picking_ready:
                                 if picking_ready.state != 'done':
@@ -646,17 +650,18 @@ class MarketplaceAccount(models.Model):
                                         # if pline.product_uom_qty == pline.forecast_availability:
                                         pline.write({'quantity_done':pline.forecast_availability})
                                     picking_ready.button_validate()
-                                invoice_ready = invoice.search([('ref', '=', so_id.client_order_ref)])
-                                if not invoice_ready and so_id.partner_id and so_id.partner_id.property_account_receivable_id:
-                                    context = {
-                                        'active_model': 'sale.order',
-                                        'active_ids': [so_id.id],
-                                        'active_id': so_id.id,
-                                    }
-                                    payment = self.env['sale.advance.payment.inv'].with_context(context).create({'advance_payment_method': 'delivered'})
-                                    payment.create_invoices()
-                                    invoice_ready = invoice.search([('ref', '=', so_id.client_order_ref)])
-                                print(invoice_ready)
+                                so_id.get_escrow_detail()
+                                # invoice_ready = invoice.search([('ref', '=', so_id.client_order_ref)])
+                                # if not invoice_ready and so_id.partner_id and so_id.partner_id.property_account_receivable_id:
+                                #     context = {
+                                #         'active_model': 'sale.order',
+                                #         'active_ids': [so_id.id],
+                                #         'active_id': so_id.id,
+                                #     }
+                                #     payment = self.env['sale.advance.payment.inv'].with_context(context).create({'advance_payment_method': 'delivered'})
+                                #     payment.create_invoices()
+                                #     invoice_ready = invoice.search([('ref', '=', so_id.client_order_ref)])
+                                # print(invoice_ready)
                         # SEBELUMNYAACTIVE
                                 # for inv in invoice_ready:
                                 #     print(inv)

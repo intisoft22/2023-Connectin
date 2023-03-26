@@ -51,6 +51,7 @@
                             <field name="shopee_payment_method" />
                             <field name="shopee_shipping_carrier" />
                             <field name="shopee_invoiced_price" />
+                            <field name="marketplace_account_id" />
                         </group>
                         <field name="shopee_package_list" >
                             <tree>
