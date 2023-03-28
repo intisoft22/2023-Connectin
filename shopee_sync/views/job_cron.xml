@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <record id="ir_cron_auto_get_order" model="ir.cron">
+            <field name="name">Get Order Shopee</field>
+            <field name="interval_number">5</field>
+            <field name="interval_type">minutes</field>
+            <field name="numbercall">-1</field>
+            <field name="nextcall"
+                   eval="(DateTime.now().replace(hour=0, minute=0) + timedelta(days=1)).strftime('%Y-%m-%d %H:%M:%S')"/>
+            <field name="doall" eval="False"/>
+            <field name="model_id" ref="mh_marketplace_account.model_marketplace_account"/>
+            <field name="code">model._get_order()</field>
+            <field name="state">code</field>
+        </record>
+    </data>
+</odoo>

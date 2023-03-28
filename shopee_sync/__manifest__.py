@@ -26,6 +26,7 @@
         'views/views.xml',
         'views/marketplace_account_view.xml',
         'views/order_sync.xml',
+        'views/job_cron.xml',
         'security/ir.model.access.csv',
     ],
     'qweb': [

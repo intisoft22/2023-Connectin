@@ -397,7 +397,7 @@ class MarketplaceAccount(models.Model):
                         order_sn = jload['order_sn']
                         self.get_order_detail(order_sn)
 
-    def get_order_time(self, start_date, end_date):
+    def get_order_time(self, start_date, end_date,cursor=False):
         for rec in self:
             # self.get_token()
             timest = int(time.time())
@@ -414,7 +414,14 @@ class MarketplaceAccount(models.Model):
             time_from = start_date
             time_to = end_date
             url = host + path + "?access_token=%s&partner_id=%s&shop_id=%s&timestamp=%s&sign=%s&page_size=20&time_from=%s&time_range_field=create_time&time_to=%s" % (
-            access_token, partner_id, shop_id, timest, sign, time_from, time_to)
+                access_token, partner_id, shop_id, timest, sign, time_from, time_to)
+            if not cursor:
+                url = host + path + "?access_token=%s&partner_id=%s&shop_id=%s&timestamp=%s&sign=%s&page_size=20&time_from=%s&time_range_field=create_time&time_to=%s" % (
+                access_token, partner_id, shop_id, timest, sign, time_from, time_to)
+            else:
+                url = host + path + "?access_token=%s&partner_id=%s&shop_id=%s&timestamp=%s&sign=%s&page_size=20&time_from=%s&time_range_field=create_time&time_to=%s&cursor=%s" % (
+                access_token, partner_id, shop_id, timest, sign, time_from, time_to,cursor)
+
             print(url)
             payload = json.dumps({})
             headers = {'Content-Type': 'application/json'}
@@ -430,6 +437,8 @@ class MarketplaceAccount(models.Model):
                         print(jload)
                         order_sn = jload['order_sn']
                         self.get_order_detail(order_sn)
+                    # if json_loads['response']['next_cursor']:
+                    #     self.get_order_time(start_date, end_date,cursor=json_loads['response']['next_cursor'])
 
     def get_order_detail(self, order_sn):
         for rec in self:
@@ -874,4 +883,20 @@ class MarketplaceAccount(models.Model):
                         #                 # data_ready.write(vals_payout)
                         # if json_loads['response']['more'] == 'true':
                         #     self.get_payout_detail(page+1)
+
+    @api.model
+    def _get_order(self):
+        today = date.today()
+        # print(today)
+        ma_ids = self.env['marketplace.account'].search(
+            [('active', '=', True), ('state', '=', 'authenticated')])
+
+        for ma in ma_ids:
+            print(ma.name)
+            ma.get_token()
+            now=datetime.now()
+            start_date = str(int(datetime.timestamp(ma.date_updated)))
+            end_date = str(int(datetime.timestamp( (datetime.now()))))
+            ma.get_order_time(start_date, end_date)
+            ma.date_updated=now
 

@@ -28,6 +28,7 @@ class MarketplaceAccount(models.Model):
     url_auth = fields.Char('URL AUTH')
     url_api = fields.Char('Url')
     api_path = fields.Char('API')
+    date_updated = fields.Datetime('Updated date')
 
     def shop_auth():
         timest = int(time.time())
