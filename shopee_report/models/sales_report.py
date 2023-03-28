@@ -95,11 +95,14 @@ class SalesReport(models.Model):
 
             for ac in range(1, jumlah_hari + 1):
                 ac_date = date(rec.year, int(rec.month), ac)
-                filter_account = account.search([('invoice_date', '=', ac_date)])
+                filter_account = account.search([('invoice_date', '=', ac_date), ('payment_state', '=', 'paid')])
 
                 sum_amount_total = 0
                 for fa in filter_account:
-                    sum_amount_total += fa.amount_total
+                    sale = self.env['sale.order'].search([('client_order_ref', '=', fa.ref), ('marketplace_account_id', '=', rec.marketplace_id.id)])
+
+                    if sale:
+                        sum_amount_total += fa.amount_total
 
                 disc = 0
                 modal_jual = 0
