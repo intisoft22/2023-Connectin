@@ -7,6 +7,8 @@ import hashlib
 import urllib.request
 from odoo import http
 import requests
+import time
+from datetime import datetime, timedelta, date
 
 
 class MarketplaceAccount(models.Model):
@@ -28,7 +30,8 @@ class MarketplaceAccount(models.Model):
     url_auth = fields.Char('URL AUTH')
     url_api = fields.Char('Url')
     api_path = fields.Char('API')
-    date_updated = fields.Datetime('Updated date')
+    date_updated = fields.Datetime('Last Get Order')
+    expiry_token = fields.Datetime('Token Expiry Date')
 
     def shop_auth():
         timest = int(time.time())
@@ -73,6 +76,12 @@ class MarketplaceAccount(models.Model):
         for rec in self:
             rec.state='new'
 
+    def check_expiry_token(self):
+        for rec in self:
+
+            if datetime.strptime((str(datetime.now()).split('.')[0]), "%Y-%m-%d %H:%M:%S")> datetime.strptime((str(rec.expiry_token).split('.')[0]), "%Y-%m-%d %H:%M:%S"):
+                rec.get_token()
+
     def get_token(self):
         for rec in self:
             timest = int(time.time())
@@ -108,6 +117,7 @@ class MarketplaceAccount(models.Model):
                 json_loads = json.loads(response.text)
                 rec.access_token_shopee = json_loads['access_token']
                 rec.refresh_access_token_shopee = json_loads['refresh_token']
+                rec.expiry_token=datetime.now()+timedelta(seconds=json_loads['expire_in'])
             else:
                 path = "/api/v2/auth/token/get"
                 code = rec.code_shopee
@@ -135,8 +145,9 @@ class MarketplaceAccount(models.Model):
                 json_loads = json.loads(response.text)
                 rec.access_token_shopee = json_loads['access_token']
                 rec.refresh_access_token_shopee = json_loads['refresh_token']
+                rec.expiry_token=datetime.now()+timedelta(seconds=json_loads['expire_in'])
             rec.state='authenticated'
-            
+
     def get_product(self):
         for rec in self:
             timest = int(time.time())
@@ -172,6 +183,7 @@ class MarketplaceAccount(models.Model):
 
     def get_pathapi(self):
         for rec in self:
+            rec.check_expiry_token()
             timest = int(time.time())
             host = rec.url_api
             path = rec.api_path

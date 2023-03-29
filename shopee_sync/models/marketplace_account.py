@@ -156,6 +156,8 @@ class MarketplaceAccount(models.Model):
     def get_product(self, offset=0):
         for rec in self:
             # self.get_token()
+
+            rec.check_expiry_token()
             timest = int(time.time())
             host = rec.url_api
             # path = "api/v2/logistics/get_channel_list"
@@ -400,6 +402,8 @@ class MarketplaceAccount(models.Model):
     def get_order_time(self, start_date, end_date,cursor=False):
         for rec in self:
             # self.get_token()
+
+            rec.check_expiry_token()
             timest = int(time.time())
             host = rec.url_api
             path = "/api/v2/order/get_order_list"
@@ -571,6 +575,7 @@ class MarketplaceAccount(models.Model):
                                     'shopee_order_status': jload['order_status'],
                                     'shopee_payment_method': jload['payment_method'],
                                     'shopee_shipping_carrier': jload['shipping_carrier'],
+                                    'marketplace_account_id': rec.id,
                                 }
                                 data_ready.write(vals_order)
                                 if jload['order_status'] == 'CANCELLED':
@@ -655,10 +660,16 @@ class MarketplaceAccount(models.Model):
                             picking_ready = picking.search([('origin', '=', so_id.name)])
                             if picking_ready:
                                 if picking_ready.state != 'done':
+                                    picking_ready.scheduled_date =datetime.fromtimestamp(int(jload['ship_by_date'])).strftime(
+                                            '%Y-%m-%d %H:%M:%S')
+                                if picking_ready.state != 'done':
                                     for pline in picking_ready.move_ids_without_package:
                                         # if pline.product_uom_qty == pline.forecast_availability:
                                         pline.write({'quantity_done':pline.forecast_availability})
                                     picking_ready.button_validate()
+
+                                    picking_ready.date_done =datetime.fromtimestamp(int(jload['ship_by_date'])).strftime(
+                                            '%Y-%m-%d %H:%M:%S')
                                 so_id.get_escrow_detail()
                                 # invoice_ready = invoice.search([('ref', '=', so_id.client_order_ref)])
                                 # if not invoice_ready and so_id.partner_id and so_id.partner_id.property_account_receivable_id:
@@ -741,8 +752,10 @@ class MarketplaceAccount(models.Model):
         
     def get_dependencies(self):
         for rec in self:
-            self.get_category()
-            self.get_logistic()
+
+            rec.check_expiry_token()
+            rec.get_category()
+            rec.get_logistic()
             return {
                 'type': 'ir.actions.client',
                 'tag': 'display_notification',
@@ -893,7 +906,8 @@ class MarketplaceAccount(models.Model):
 
         for ma in ma_ids:
             print(ma.name)
-            ma.get_token()
+            # ma.get_token()
+            ma.check_expiry_token()
             now=datetime.now()
             start_date = str(int(datetime.timestamp(ma.date_updated)))
             end_date = str(int(datetime.timestamp( (datetime.now()))))

@@ -44,6 +44,7 @@
                             <field name="code_shopee"/>
                             <field name="access_token_shopee"/>
                             <field name="refresh_access_token_shopee"/>
+                            <field name="expiry_token"/>
                         </group>
                     </group>
                 </sheet>
