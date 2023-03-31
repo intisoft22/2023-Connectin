@@ -154,101 +154,101 @@ class SaleOrder(models.Model):
                                             }
                                         payment = payment_ids.with_context(active_model='account.move',active_ids=[invoice_ready.id]).create(vals_payment)._create_payments()
 
-# class StockMove(models.Model):
-#     _inherit = 'stock.move'
-#
-#     def write(self, vals):
-#         qty = 0
-#
-#         if vals.get('state'):
-#             if (vals.get('state') == 'done') or (vals.get('state') == 'cancel'):
-#                 for prod in self.product_id:
-#                     product_id = prod.id
-#                     if vals.get('product_id'):
-#                         product_id = self.vals.get('product_id')
-#                     product = self.env['product.product'].search([('id', '=', product_id)], order="name")
-#                     if product and product.shopee_product_id:
-#                         qty = product.qty_available
-#                         print('--up stock--')
-#                         print(product.name)
-#                         print(product.qty_available)
-#                         print(qty)
-#                         maccount = self.env['marketplace.account'].search([('active', '=', True)])
-#                         for rec in product.shopee_account_id:
-#
-#                             rec.get_token()
-#                             timest = int(time.time())
-#                             host = rec.url_api
-#                             path = "/api/v2/product/update_stock"
-#                             partner_id = rec.partner_id_shopee
-#                             shop_id = rec.shop_id_shopee
-#                             access_token = rec.access_token_shopee
-#                             tmp = rec.partner_key_shopee
-#                             partner_key = tmp.encode()
-#                             tmp_base_string = "%s%s%s%s%s" % (partner_id, path, timest, access_token, shop_id)
-#                             base_string = tmp_base_string.encode()
-#                             sign = hmac.new(partner_key, base_string, hashlib.sha256).hexdigest()
-#                             datapage = 100
-#                             url = host + path + "?access_token=%s&partner_id=%s&shop_id=%s&timestamp=%s&sign=%s" % (
-#                                 access_token, partner_id, shop_id, timest, sign)
-#                             print(url)
-#                             modelid=0
-#                             if product.shopee_model_id != 0:
-#                                 modelid=int(product.shopee_model_id)
-#                             payload = json.dumps({
-#                                 "item_id": int(product.shopee_product_id),
-#                                 "stock_list": [
-#                                     {
-#                                         "model_id": modelid,
-#                                         "seller_stock": [
-#                                             {
-#                                                 "stock": int(product.qty_available)
-#                                             }
-#                                         ]
-#                                     }
-#                                 ]
-#                             })
-#                             headers = {'Content-Type': 'application/json'}
-#                             # response = requests.request("POST", url, headers=headers, data=payload, allow_redirects=False)
-#                             # print(payload)
-#                             # # print(response.text)
-#                             # json_loads = json.loads(response.text)
-#                             # return2 = []
-#                             # messgs = '-'
-#                             # if json_loads:
-#                             #     if json_loads['error'] == 'error_param':
-#                             #         return2.append(str(json_loads['msg']))
-#                             #     else:
-#                             #         print(json_loads['response'])
-#                             #         for jload in json_loads['response']['failure_list']:
-#                             #             print(jloads['model_id'])
-#                             #             messgs = jloads['failed_reason']
-#                             #         for jload in json_loads['response']['success_list']:
-#                             #             print(json_loads)
-#                             #             messgs = 'success'
-#                             response = requests.request("POST", url, headers=headers, data=payload, allow_redirects=False)
-#                             print(payload)
-#                             # print(response.text)
-#                             json_loads = json.loads(response.text)
-#                             return2 = []
-#                             messgs = '-'
-#                             if json_loads:
-#                                 if json_loads['error'] != '':
-#                                     raise UserError(_(str(json_loads['message'])))
-#                                 else:
-#                                     print(json_loads['response'])
-#                                     for jload in json_loads['response']['failure_list']:
-#                                         # print(jload['model_id'])
-#                                         messgs = jload['failed_reason']
-#
-#                                         raise UserError(_(str(messgs)))
-#                                     for jload in json_loads['response']['success_list']:
-#                                         # print(json_loads)
-#                                         messgs = 'success'
-# # >>>>>>> 3a3d51c091a4068b90ceb2451db48f8e0a8dc083
-#         res = super(StockMove, self).write(vals)
-#         return res
-#
+class StockMove(models.Model):
+    _inherit = 'stock.move'
+
+    def write(self, vals):
+        qty = 0
+
+        if vals.get('state'):
+            if (vals.get('state') == 'done') or (vals.get('state') == 'cancel'):
+                for prod in self.product_id:
+                    product_id = prod.id
+                    if vals.get('product_id'):
+                        product_id = self.vals.get('product_id')
+                    product = self.env['product.product'].search([('id', '=', product_id)], order="name")
+                    if product and product.shopee_product_id:
+                        qty = product.qty_available
+                        print('--up stock--')
+                        print(product.name)
+                        print(product.qty_available)
+                        print(qty)
+                        maccount = self.env['marketplace.account'].search([('active', '=', True)])
+                        for rec in product.shopee_account_id:
+
+                            rec.get_token()
+                            timest = int(time.time())
+                            host = rec.url_api
+                            path = "/api/v2/product/update_stock"
+                            partner_id = rec.partner_id_shopee
+                            shop_id = rec.shop_id_shopee
+                            access_token = rec.access_token_shopee
+                            tmp = rec.partner_key_shopee
+                            partner_key = tmp.encode()
+                            tmp_base_string = "%s%s%s%s%s" % (partner_id, path, timest, access_token, shop_id)
+                            base_string = tmp_base_string.encode()
+                            sign = hmac.new(partner_key, base_string, hashlib.sha256).hexdigest()
+                            datapage = 100
+                            url = host + path + "?access_token=%s&partner_id=%s&shop_id=%s&timestamp=%s&sign=%s" % (
+                                access_token, partner_id, shop_id, timest, sign)
+                            print(url)
+                            modelid=0
+                            if product.shopee_model_id != 0:
+                                modelid=int(product.shopee_model_id)
+                            payload = json.dumps({
+                                "item_id": int(product.shopee_product_id),
+                                "stock_list": [
+                                    {
+                                        "model_id": modelid,
+                                        "seller_stock": [
+                                            {
+                                                "stock": int(product.qty_available)
+                                            }
+                                        ]
+                                    }
+                                ]
+                            })
+                            headers = {'Content-Type': 'application/json'}
+                            # response = requests.request("POST", url, headers=headers, data=payload, allow_redirects=False)
+                            # print(payload)
+                            # # print(response.text)
+                            # json_loads = json.loads(response.text)
+                            # return2 = []
+                            # messgs = '-'
+                            # if json_loads:
+                            #     if json_loads['error'] == 'error_param':
+                            #         return2.append(str(json_loads['msg']))
+                            #     else:
+                            #         print(json_loads['response'])
+                            #         for jload in json_loads['response']['failure_list']:
+                            #             print(jloads['model_id'])
+                            #             messgs = jloads['failed_reason']
+                            #         for jload in json_loads['response']['success_list']:
+                            #             print(json_loads)
+                            #             messgs = 'success'
+                            response = requests.request("POST", url, headers=headers, data=payload, allow_redirects=False)
+                            print(payload)
+                            # print(response.text)
+                            json_loads = json.loads(response.text)
+                            return2 = []
+                            messgs = '-'
+                            if json_loads:
+                                if json_loads['error'] != '':
+                                    raise UserError(_(str(json_loads['message'])))
+                                else:
+                                    print(json_loads['response'])
+                                    for jload in json_loads['response']['failure_list']:
+                                        # print(jload['model_id'])
+                                        messgs = jload['failed_reason']
+
+                                        raise UserError(_(str(messgs)))
+                                    for jload in json_loads['response']['success_list']:
+                                        # print(json_loads)
+                                        messgs = 'success'
+# >>>>>>> 3a3d51c091a4068b90ceb2451db48f8e0a8dc083
+        res = super(StockMove, self).write(vals)
+        return res
+
 
 class ShopeeGetOrder(models.TransientModel):
     _name = 'shopee.get.order'
