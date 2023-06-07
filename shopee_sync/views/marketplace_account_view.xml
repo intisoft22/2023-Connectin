@@ -8,6 +8,8 @@
             <field name="inherit_id" ref="mh_marketplace_account.marketplace_account_form_view"/>
             <field name="arch" type="xml">
                 <button name="get_product" position="after">
+<!--                    <button string="Get Variant Product" type="object" name="get_variant" states='authenticated'-->
+<!--                                class="oe_highlight"/>-->
                     <button string="Get Dependencies" type="object" name="get_dependencies" states='authenticated'
                                 class="oe_highlight"/>
 <!--                    <button string="Upload Image" type="object" name="post_upload_image" states='new'-->
@@ -18,9 +20,12 @@
 <!--                                class="oe_highlight"/>-->
 <!--                    <button string="Test Add Product" type="object" name="addProduct" states='new'-->
 <!--                                class="oe_highlight" invisible="1"/>-->
-                    <button string="Get Escrow" type="object" name="get_all_escrow" states='authenticated'
-                                class="oe_highlight" />
+<!--                    <button string="Get Escrow" type="object" name="get_all_escrow" states='authenticated'-->
+<!--                                class="oe_highlight" />-->
                 </button>
+                <field name="expiry_token" position="after">
+                    <field name="page_product"/>
+                </field>
             </field>
         </record>
 

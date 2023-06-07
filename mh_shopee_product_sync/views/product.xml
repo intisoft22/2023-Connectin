@@ -47,6 +47,17 @@
             <field name="arch" type="xml">
                 <field name="shopee_product_id" position="after">
                     <field name="shopee_model_id"/>
+                    <field name="shopee_model_ids">
+                        <tree>
+                            <field name="model_id"/>
+                        </tree>
+                        <form>
+                            <group>
+                                <field name="model_id"/>
+                            </group>
+                        </form>
+                    </field>
+
                 </field>
 
             </field>
@@ -61,6 +72,16 @@
                 <xpath expr="//page[@name='shopee_tab']/group[@name='generalshopee']" position="before">
                     <button name="upload_marketplace_shopee" string="Upload" type="object" class="oe_highlight"/>
                     <button name="remove_marketplace_shopee" string="Remove" type="object"   attrs="{'invisible':[('shopee_product_id','=',False)]}"/>
+                    <button name="updateharga_shopee" string="Update Price" type="object"   attrs="{'invisible':[('shopee_product_id','=',False)]}"/>
+                    <button name="%(mh_shopee_product_sync.action_view_add_variant_product)d" string="Generate Variant"
+                            type="action" class="btn-primary"
+                            />
+
+                    <button name="update_variant_shopee_act" string="Update Variant" type="object"
+                            attrs="{'invisible':[('changevariant_shopee','!=',True)]}"/>
+                    <button name="reset_variant_shopee" string="Reset Variant" type="object" attrs="{'invisible':[('needreset_shopee','!=',True)]}"
+                            />
+                    <button name="updatevariant_shopee" string="Update Variant" type="object"   attrs="{'invisible':[('shopee_product_id','=',False)]}"/>
                 </xpath>
                 <xpath expr="//page[@name='shopee_tab']/group[@name='generalshopee']" position="after">
                     <separator string="Spesification"/>
@@ -124,7 +145,7 @@
                         </div>
                         <field name="shopee_logistic_ids"  required="True" context="{ 'default_shop_account_id': shopee_account_id,}">
                             <tree editable="bottom">
-                                <field name="logistic_domain"  />
+                                <field name="logistic_domain" invisible="1" />
                                 <field name="logistic_id" domain="logistic_domain"/>
                                 <field name="enable" invisible="1"/>
                                 <field name="shop_account_id" invisible="1"/>
@@ -161,17 +182,10 @@
                         <field name="changevariant_shopee" groups="base.group_no_one"/>
                         <field name="variant_ok" groups="base.group_no_one"/>
                     </group>
-                    <button name="%(mh_shopee_product_sync.action_view_add_variant_product)d" string="Generate Variant"
-                            type="action" class="btn-primary"
-                            attrs="{'invisible':[('needgenerate_shopee','!=',True)]}"/>
 
-                    <button name="update_variant_shopee_act" string="Update Variant" type="object"
-                            attrs="{'invisible':[('changevariant_shopee','!=',True)]}"/>
-                    <button name="reset_variant_shopee" string="Reset Variant" type="object" attrs="{'invisible':[('needreset_shopee','!=',True)]}"
-                            />
                     <group name="variant_product">
                         <field name="shopee_variant_product_ids" attrs="{'readonly':[('needupdate_shopee','=',True)]}">
-                            <tree create="false" delete="false">
+                            <tree create="false" delete="false" edit="false">
                                 <field name="attribute_id2"/>
                                 <field name="value_ids2" widget="many2many_tags"/>
                             </tree>
@@ -205,8 +219,8 @@
                         </field>
                         <field name="shopee_variant_product_detail_ids">
                             <tree editable="bottom" create="false" delete="false" default_order="tier_tobe asc">
-                                <field name="tier_tobe"/>
-                                <field name="tier" />
+                                <field name="tier_tobe"  invisible="1"/>
+                                <field name="tier"  invisible="1" />
                                 <field name="product_id"/>
                                 <field name="model_id"/>
                                 <field name="value_ids" widget="many2many_tags"/>

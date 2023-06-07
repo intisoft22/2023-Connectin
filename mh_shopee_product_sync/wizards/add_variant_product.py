@@ -29,6 +29,8 @@ class AddVariantProduct(models.TransientModel):
         vals2 = []
         vals3 = []
         variantbeda=False
+        if product_obj.shopee_variant_product_detail_ids:
+            product_obj.reset_variant_shopee()
         for lne in self.attribute_line_ids:
 
             attrproduct_obj = self.env['product.template.attribute.line'].search(

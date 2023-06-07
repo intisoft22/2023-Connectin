@@ -27,3 +27,4 @@ access_shopee_value_variant_detail_manager,shopee.attribute.value.product.detail
 access_shopee_attribute_variant_detail_wizard_manager,shopee.attribute.variant.product.detail wizard manager,model_add_variant_product,base.group_user,1,1,1,1
 access_shopee_attribute_variant_detail_wizard_line_manager,shopee.attribute.variant.product.detail.wizard.line manager,model_add_variant_product_line,base.group_user,1,1,1,1
 access_shopee_image_product_all,shopee.image.product.all,model_shopee_image_product,base.group_user,1,1,1,1
+access_shopee_model_product_all,shopee.model.product.all,model_shopee_model_product,base.group_user,1,1,1,1

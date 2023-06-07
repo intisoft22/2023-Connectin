@@ -20,6 +20,8 @@ from odoo.exceptions import UserError
 class MarketplaceAccount(models.Model):
     _inherit = 'marketplace.account'
 
+    page_product = fields.Char('Page Product')
+
     def get_category(self):
         for rec in self:
             # self.get_token()
@@ -160,6 +162,7 @@ class MarketplaceAccount(models.Model):
             rec.check_expiry_token()
             timest = int(time.time())
             host = rec.url_api
+            offset2 = rec.page_product
             # path = "api/v2/logistics/get_channel_list"
             path = "/api/v2/product/get_item_list"
             partner_id = rec.partner_id_shopee
@@ -177,7 +180,7 @@ class MarketplaceAccount(models.Model):
             # url = host + path + "?access_token=%s&partner_id=%s&shop_id=%s&timestamp=%s&sign=%s&offset=%s&page_size=10&item_status=NORMAl&item_status=BANNED&item_status=DELETED&item_status=UNLIST" % (
             # url = host + path + "?access_token=%s&partner_id=%s&shop_id=%s&timestamp=%s&sign=%s&offset=%s&page_size=10&item_status=BANNED&item_status=UNLIST" % (
             url = host + path + "?access_token=%s&partner_id=%s&shop_id=%s&timestamp=%s&sign=%s&offset=%s&page_size=10&item_status=NORMAL&item_status=UNLIST" % (
-            access_token, partner_id, shop_id, timest, sign, offset)
+            access_token, partner_id, shop_id, timest, sign, offset2)
             # access_token, partner_id, shop_id, timest, sign) + "&update_time_from=1672578000&update_time_to=1677675600"
 
             # url = "https://partner.test-stable.shopeemobile.com/api/v2/auth/token/get?partner_id=1023577&sign=%s&timestamp=%s" % (
@@ -211,7 +214,10 @@ class MarketplaceAccount(models.Model):
                                 # self.get_model_product_detail(jload['item_id'])
                         self.get_product_detail(item_list)
                         if json_loads['response']['total_count'] > (json_loads['response']['next_offset']+10):
-                            self.get_product(json_loads['response']['next_offset'])
+                            rec.page_product=json_loads['response']['next_offset']
+                            # self.get_product(json_loads['response']['next_offset'])
+                        else:
+                            rec.page_product =0
                     else:
                         return2.append(str(json_loads['response']['total_count']))
             print(item_list)
@@ -251,6 +257,7 @@ class MarketplaceAccount(models.Model):
                 if json_loads['error'] != '':
                     raise UserError(_(str(json_loads['message'])))
                 else:
+                    urutan=0
                     for jload in json_loads['response']['item_list']:
                         sequence += 1
                         data_ready = datas.search([('shopee_product_id', '=', jload['item_id'])])
@@ -337,6 +344,7 @@ class MarketplaceAccount(models.Model):
                                 idproduct.shopee_logistic_ids =False
                                 idproduct.set_logistic_product(jload['logistic_info'])
                             if 'has_model' in jload:
+                                idproduct.has_model=True
                                 idproduct.set_tier_variant_product()
                             if 'image' in jload:
                                 no=1
@@ -360,8 +368,20 @@ class MarketplaceAccount(models.Model):
 
 
                                 idproduct.shopee_image_ids =imagearray
+                        urutan+=1
+                        print(urutan)
                         idproduct.changevariant_shopee =False
                         idproduct.variant_ok =False
+
+    def get_variant(self):
+        for rec in self:
+            datas = self.env['product.template']
+            data_ready = datas.search([('shopee_account_id', '=', rec.id)])
+            for prd in data_ready:
+                if prd.has_model:
+                    prd.set_tier_variant_product()
+                    prd.changevariant_shopee = False
+                    prd.variant_ok = False
 
     def get_order(self):
         for rec in self:
@@ -493,6 +513,10 @@ class MarketplaceAccount(models.Model):
                                 product_ready = self.env['product.product'].search([('shopee_product_id', '=', prod['item_id'])], limit=1)
                             else:
                                 product_ready = self.env['product.product'].search([('shopee_model_id', '=', prod['model_id'])], limit=1)
+                                if not product_ready:
+                                    shopee_product_ready = self.env['shopee.model.product'].search([('model_id', '=', prod['model_id'])], limit=1)
+                                    if shopee_product_ready:
+                                        product_ready=shopee_product_ready[0].product_id
 
                             if product_ready:
                                 vals_item = {
@@ -536,6 +560,11 @@ class MarketplaceAccount(models.Model):
                                         product_ready = self.env['product.product'].search([('shopee_product_id', '=', prod['item_id'])], limit=1)
                                     else:
                                         product_ready = self.env['product.product'].search([('shopee_model_id', '=', prod['model_id'])], limit=1)
+                                        if not product_ready:
+                                            shopee_product_ready = self.env['shopee.model.product'].search(
+                                                [('model_id', '=', prod['model_id'])], limit=1)
+                                            if shopee_product_ready:
+                                                product_ready = shopee_product_ready[0].product_id
                                     if product_ready:
                                         vals_item = {
                                             'product_id': product_ready.id,
@@ -599,6 +628,11 @@ class MarketplaceAccount(models.Model):
                                     product_ready = self.env['product.product'].search([('shopee_product_id', '=', prod['item_id'])], limit=1)
                                 else:
                                     product_ready = self.env['product.product'].search([('shopee_model_id', '=', prod['model_id'])], limit=1)
+                                    if not product_ready:
+                                        shopee_product_ready = self.env['shopee.model.product'].search(
+                                            [('model_id', '=', prod['model_id'])], limit=1)
+                                        if shopee_product_ready:
+                                            product_ready = shopee_product_ready[0].product_id
                                 if product_ready:
                                     item_ready = False
                                     vals_item = {
