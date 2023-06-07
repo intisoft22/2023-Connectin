@@ -99,6 +99,7 @@ class SalesReport(models.Model):
 
                 sum_amount_total = 0
                 sum_modal = 0
+                sum_biaya_admin = 0
                 for fa in filter_account:
                     sale = self.env['sale.order'].search([('client_order_ref', '=', fa.ref), ('marketplace_account_id', '=', rec.marketplace_id.id)])
 
@@ -112,9 +113,15 @@ class SalesReport(models.Model):
 
                             sum_modal += temp_modal
 
+                        account_ref = self.env['account.move'].search([('ref', '=', fa.name)])
+                        for ar in account_ref:
+                            for arl in ar.line_ids:
+                                if ar.partner_id.reconcile_account_id == arl.account_id:
+                                    sum_biaya_admin += arl.debit
+
                 disc = 0
                 modal_jual = sum_modal
-                biaya_admin = 0
+                biaya_admin = sum_biaya_admin
                 net = sum_amount_total - modal_jual - disc - biaya_admin
 
                 line_check = self.env['sales.report.line'].search([('date', '=', ac_date)])
